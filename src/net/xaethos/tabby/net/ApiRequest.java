@@ -28,6 +28,7 @@ public class ApiRequest {
         }
 
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
         conn.setRequestProperty("Accept",
                 "application/hal+json, application/json, */*; q=0.01");
 
