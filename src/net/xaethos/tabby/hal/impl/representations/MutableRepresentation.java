@@ -1,18 +1,19 @@
 package net.xaethos.tabby.hal.impl.representations;
 
-import com.theoryinpractise.halbuilder.api.*;
-import net.xaethos.tabby.hal.impl.api.Support;
+import static java.lang.String.format;
 
-//import java.beans.BeanInfo;
-//import java.beans.IntrospectionException;
-//import java.beans.Introspector;
-//import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 
-import static java.lang.String.format;
+import net.xaethos.tabby.hal.impl.api.Support;
+
+import com.theoryinpractise.halbuilder.api.Link;
+import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
+import com.theoryinpractise.halbuilder.api.Representable;
+import com.theoryinpractise.halbuilder.api.Representation;
+import com.theoryinpractise.halbuilder.api.RepresentationException;
+import com.theoryinpractise.halbuilder.api.RepresentationFactory;
 
 public class MutableRepresentation extends BaseRepresentation implements Representation {
 
@@ -74,24 +75,9 @@ public class MutableRepresentation extends BaseRepresentation implements Represe
         return this;
     }
 
-//    public Representation withBean(Object value) {
-//        try {
-//            BeanInfo beanInfo = Introspector.getBeanInfo(value.getClass());
-//            for (PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-//                if (!"class".equals(pd.getName())) {
-//                    withProperty(pd.getName(), pd.getReadMethod().invoke(value));
-//                }
-//            }
-//
-//        } catch (IntrospectionException e) {
-//            throw new RuntimeException(e);
-//        } catch (InvocationTargetException e) {
-//            throw new RuntimeException(e);
-//        } catch (IllegalAccessException e) {
-//            throw new RuntimeException(e);
-//        }
-//        return this;
-//    }
+    public Representation withBean(Object value) {
+        throw new UnsupportedOperationException();
+    }
 
     public Representation withFields(Object value) {
         try {
@@ -116,9 +102,9 @@ public class MutableRepresentation extends BaseRepresentation implements Represe
         return withRepresentation(rel, representationFactory.newRepresentation(href).withFields(o));
     }
 
-//    public Representation withBeanBasedRepresentation(String rel, String href, Object o) {
-//        return withRepresentation(rel, representationFactory.newRepresentation(href).withBean(o));
-//    }
+    public Representation withBeanBasedRepresentation(String rel, String href, Object o) {
+        return withRepresentation(rel, representationFactory.newRepresentation(href).withBean(o));
+    }
 
     /**
      * Adds a new namespace
