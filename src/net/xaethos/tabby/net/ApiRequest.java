@@ -7,7 +7,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import net.xaethos.tabby.hal.DefaultRepresentationFactory;
+import net.xaethos.tabby.halbuilder.DefaultRepresentationFactory;
 
 import android.util.Log;
 

@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.representations;
+package net.xaethos.tabby.halbuilder.impl.representations;
 
 import static java.lang.String.format;
 
@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.net.URI;
 
-import net.xaethos.tabby.hal.impl.api.Support;
+import net.xaethos.tabby.halbuilder.impl.api.Support;
 
 import com.theoryinpractise.halbuilder.api.Link;
 import com.theoryinpractise.halbuilder.api.ReadableRepresentation;

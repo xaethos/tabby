@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.bytecode;
+package net.xaethos.tabby.halbuilder.impl.bytecode;
 
 import java.lang.reflect.Method;
 

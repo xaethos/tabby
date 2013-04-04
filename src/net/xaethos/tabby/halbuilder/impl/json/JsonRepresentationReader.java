@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.json;
+package net.xaethos.tabby.halbuilder.impl.json;
 
 //FIXME: Re-write this with Android shit instead of Jackson
 
@@ -8,13 +8,14 @@ import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 import com.theoryinpractise.halbuilder.api.RepresentationException;
 import com.theoryinpractise.halbuilder.api.RepresentationFactory;
 import com.theoryinpractise.halbuilder.api.RepresentationReader;
-import net.xaethos.tabby.hal.impl.representations.MutableRepresentation;
+
+import net.xaethos.tabby.halbuilder.impl.representations.MutableRepresentation;
 
 import java.io.Reader;
 import java.util.Iterator;
 import java.util.Map;
 
-import static net.xaethos.tabby.hal.impl.api.Support.*;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.*;
 
 public class JsonRepresentationReader implements RepresentationReader {
     private RepresentationFactory representationFactory;

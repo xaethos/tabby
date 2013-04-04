@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.bytecode;
+package net.xaethos.tabby.halbuilder.impl.bytecode;
 
 import com.google.common.base.Preconditions;
 import com.theoryinpractise.halbuilder.api.Contract;
@@ -6,7 +6,7 @@ import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 
 import java.lang.reflect.Method;
 
-import static net.xaethos.tabby.hal.impl.bytecode.InterfaceSupport.derivePropertyNameFromMethod;
+import static net.xaethos.tabby.halbuilder.impl.bytecode.InterfaceSupport.derivePropertyNameFromMethod;
 
 /**
  * A Java Interface matching contract

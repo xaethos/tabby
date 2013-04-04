@@ -1,11 +1,11 @@
-package net.xaethos.tabby.hal.impl.representations;
+package net.xaethos.tabby.halbuilder.impl.representations;
 
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Ordering.usingToString;
 import static com.google.common.collect.Sets.newHashSet;
 import static java.lang.String.format;
-import static net.xaethos.tabby.hal.impl.api.Support.WHITESPACE_SPLITTER;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.WHITESPACE_SPLITTER;
 
 import java.io.StringWriter;
 import java.io.Writer;
@@ -17,9 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.xaethos.tabby.hal.impl.api.Support;
-import net.xaethos.tabby.hal.impl.bytecode.InterfaceContract;
-import net.xaethos.tabby.hal.impl.bytecode.InterfaceRenderer;
+import net.xaethos.tabby.halbuilder.impl.api.Support;
+import net.xaethos.tabby.halbuilder.impl.bytecode.InterfaceContract;
+import net.xaethos.tabby.halbuilder.impl.bytecode.InterfaceRenderer;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;

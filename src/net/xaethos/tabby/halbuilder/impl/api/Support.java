@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.api;
+package net.xaethos.tabby.halbuilder.impl.api;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;

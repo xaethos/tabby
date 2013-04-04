@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl;
+package net.xaethos.tabby.halbuilder.impl;
 
 public class ContentType {
     private String type;

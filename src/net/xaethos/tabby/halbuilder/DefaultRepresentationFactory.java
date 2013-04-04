@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal;
+package net.xaethos.tabby.halbuilder;
 
 import static java.lang.String.format;
 
@@ -11,9 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import net.xaethos.tabby.hal.impl.ContentType;
-import net.xaethos.tabby.hal.impl.json.JsonRepresentationReader;
-import net.xaethos.tabby.hal.impl.representations.MutableRepresentation;
+import net.xaethos.tabby.halbuilder.impl.ContentType;
+import net.xaethos.tabby.halbuilder.impl.json.JsonRepresentationReader;
+import net.xaethos.tabby.halbuilder.impl.representations.MutableRepresentation;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;

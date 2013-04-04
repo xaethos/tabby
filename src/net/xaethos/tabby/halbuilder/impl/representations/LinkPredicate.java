@@ -1,4 +1,4 @@
-package net.xaethos.tabby.hal.impl.representations;
+package net.xaethos.tabby.halbuilder.impl.representations;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
