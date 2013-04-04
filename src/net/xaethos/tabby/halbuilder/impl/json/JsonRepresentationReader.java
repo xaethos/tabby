@@ -2,54 +2,76 @@ package net.xaethos.tabby.halbuilder.impl.json;
 
 //FIXME: Re-write this with Android shit instead of Jackson
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
-import com.theoryinpractise.halbuilder.api.RepresentationException;
-import com.theoryinpractise.halbuilder.api.RepresentationFactory;
-import com.theoryinpractise.halbuilder.api.RepresentationReader;
-
-import net.xaethos.tabby.halbuilder.impl.representations.MutableRepresentation;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.CURIE;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.EMBEDDED;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.HREF;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.HREFLANG;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.LINKS;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.NAME;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.PROFILE;
+import static net.xaethos.tabby.halbuilder.impl.api.Support.TITLE;
 
 import java.io.Reader;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
-import static net.xaethos.tabby.halbuilder.impl.api.Support.*;
+import net.xaethos.tabby.halbuilder.api.ParcelableLink;
+import net.xaethos.tabby.halbuilder.api.ParcelableRepresentationFactory;
+import net.xaethos.tabby.halbuilder.impl.representations.ImmutableRepresentation;
+import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
+import android.os.Bundle;
 
-public class JsonRepresentationReader implements RepresentationReader {
-    private RepresentationFactory representationFactory;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
+import com.theoryinpractise.halbuilder.api.RepresentationException;
+import com.theoryinpractise.halbuilder.api.RepresentationReader;
 
-    public JsonRepresentationReader(RepresentationFactory representationFactory) {
+public class JsonRepresentationReader implements RepresentationReader
+{
+    private ParcelableRepresentationFactory representationFactory;
+
+    public JsonRepresentationReader(ParcelableRepresentationFactory representationFactory)
+    {
         this.representationFactory = representationFactory;
     }
 
-    public ReadableRepresentation read(Reader reader) {
+    public ParcelableReadableRepresentation read(Reader reader) {
         try {
             ObjectMapper mapper = new ObjectMapper();
 
             JsonNode rootNode = mapper.readValue(reader, JsonNode.class);
 
-            MutableRepresentation resource = readResource(rootNode);
-
-            return resource.toImmutableResource();
-        } catch (Exception e) {
+            return readResource(rootNode);
+        }
+        catch (Exception e) {
             throw new RepresentationException(e);
         }
 
     }
 
-    private MutableRepresentation readResource(JsonNode rootNode) {
-        MutableRepresentation resource = new MutableRepresentation(representationFactory);
+    private ImmutableRepresentation readResource(JsonNode rootNode) {
+        Bundle namespaces = new Bundle();
+        Bundle properties = new Bundle();
+        Bundle resources = new Bundle();
+        List<ParcelableLink> links = Lists.newArrayList();
+        boolean hasNullProperties;
 
-        readNamespaces(resource, rootNode);
-        readLinks(resource, rootNode);
-        readProperties(resource, rootNode);
-        readResources(resource, rootNode);
-        return resource;
+        readNamespaces(namespaces, rootNode);
+        readLinks(links, rootNode);
+        hasNullProperties = readProperties(properties, rootNode);
+        readResources(resources, rootNode);
+
+        return new ImmutableRepresentation(representationFactory,
+                                           namespaces,
+                                           links,
+                                           properties,
+                                           resources,
+                                           hasNullProperties);
     }
 
-    private void readNamespaces(MutableRepresentation resource, JsonNode rootNode) {
+    private void readNamespaces(Bundle namespaces, JsonNode rootNode) {
         if (rootNode.has(LINKS)) {
             JsonNode linksNode = rootNode.get(LINKS);
             if (linksNode.has(CURIE)) {
@@ -59,36 +81,45 @@ public class JsonRepresentationReader implements RepresentationReader {
                     Iterator<JsonNode> values = curieNode.elements();
                     while (values.hasNext()) {
                         JsonNode valueNode = values.next();
-                        resource.withNamespace(valueNode.get(NAME).asText(), valueNode.get(HREF).asText());
+                        namespaces.putString(valueNode.get(NAME).asText(),
+                                             valueNode.get(HREF).asText());
                     }
-                } else {
-                    resource.withNamespace(curieNode.get(NAME).asText(), curieNode.get(HREF).asText());
+                }
+                else {
+                    namespaces.putString(curieNode.get(NAME).asText(),
+                                         curieNode.get(HREF).asText());
                 }
             }
         }
     }
 
-    private void readLinks(MutableRepresentation resource, JsonNode rootNode) {
+    private void readLinks(List<ParcelableLink> links, JsonNode rootNode) {
         if (rootNode.has(LINKS)) {
-            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.get(LINKS).fields();
+            Iterator<Map.Entry<String, JsonNode>> fields =
+                    rootNode.get(LINKS).fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> keyNode = fields.next();
                 if (!CURIE.equals((keyNode.getKey()))) {
                     if (keyNode.getValue().isArray()) {
-                        Iterator<JsonNode> values = keyNode.getValue().elements();
+                        Iterator<JsonNode> values =
+                                keyNode.getValue().elements();
                         while (values.hasNext()) {
                             JsonNode valueNode = values.next();
-                            withJsonLink(resource, keyNode, valueNode);
+                            withJsonLink(links, keyNode, valueNode);
                         }
-                    } else {
-                        withJsonLink(resource, keyNode, keyNode.getValue());
+                    }
+                    else {
+                        withJsonLink(links, keyNode, keyNode.getValue());
                     }
                 }
             }
         }
     }
 
-    private void withJsonLink(MutableRepresentation resource, Map.Entry<String, JsonNode> keyNode, JsonNode valueNode) {
+    private void withJsonLink(List<ParcelableLink> links,
+            Map.Entry<String, JsonNode> keyNode,
+            JsonNode valueNode)
+    {
         String rel = keyNode.getKey();
         String href = valueNode.get(HREF).asText();
         String name = optionalNodeValueAsText(valueNode, NAME);
@@ -96,7 +127,13 @@ public class JsonRepresentationReader implements RepresentationReader {
         String hreflang = optionalNodeValueAsText(valueNode, HREFLANG);
         String profile = optionalNodeValueAsText(valueNode, PROFILE);
 
-        resource.withLink(rel, href, name, title, hreflang, profile);
+        links.add(new ParcelableLink(representationFactory,
+                                     rel,
+                                     href,
+                                     name,
+                                     title,
+                                     hreflang,
+                                     profile));
     }
 
     String optionalNodeValueAsText(JsonNode node, String key) {
@@ -104,32 +141,44 @@ public class JsonRepresentationReader implements RepresentationReader {
         return value != null ? value.asText() : null;
     }
 
-    private void readProperties(MutableRepresentation resource, JsonNode rootNode) {
+    private boolean readProperties(Bundle properties, JsonNode rootNode) {
+        boolean hasNullProperties = false;
 
         Iterator<String> fieldNames = rootNode.fieldNames();
         while (fieldNames.hasNext()) {
             String fieldName = fieldNames.next();
             if (!fieldName.startsWith("_")) {
                 JsonNode field = rootNode.get(fieldName);
-                resource.withProperty(fieldName, field.isNull() ? null : field.asText());
+                if (field.isNull()) {
+                    hasNullProperties = true;
+                    properties.putString(fieldName, null);
+                }
+                else {
+                    properties.putString(fieldName, field.asText());
+                }
             }
         }
 
+        return hasNullProperties;
     }
 
-    private void readResources(MutableRepresentation resource, JsonNode rootNode) {
+    private void readResources(Bundle resources, JsonNode rootNode) {
         if (rootNode.has(EMBEDDED)) {
-            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.get(EMBEDDED).fields();
+            Iterator<Map.Entry<String, JsonNode>> fields =
+                    rootNode.get(EMBEDDED).fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> keyNode = fields.next();
                 if (keyNode.getValue().isArray()) {
                     Iterator<JsonNode> values = keyNode.getValue().elements();
                     while (values.hasNext()) {
                         JsonNode valueNode = values.next();
-                        resource.withRepresentation(keyNode.getKey(), readResource(valueNode));
+                        resources.putParcelable(keyNode.getKey(),
+                                                readResource(valueNode));
                     }
-                } else {
-                    resource.withRepresentation(keyNode.getKey(), readResource(keyNode.getValue()));
+                }
+                else {
+                    resources.putParcelable(keyNode.getKey(),
+                                            readResource(keyNode.getValue()));
                 }
 
             }

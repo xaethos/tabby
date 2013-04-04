@@ -4,44 +4,58 @@ import static java.lang.String.format;
 
 import java.io.BufferedReader;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
-import net.xaethos.tabby.halbuilder.impl.ContentType;
+import net.xaethos.tabby.halbuilder.api.ParcelableLink;
+import net.xaethos.tabby.halbuilder.api.ParcelableRepresentationFactory;
 import net.xaethos.tabby.halbuilder.impl.json.JsonRepresentationReader;
-import net.xaethos.tabby.halbuilder.impl.representations.MutableRepresentation;
+import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.collect.Sets;
-import com.theoryinpractise.halbuilder.api.Link;
-import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 import com.theoryinpractise.halbuilder.api.Representation;
 import com.theoryinpractise.halbuilder.api.RepresentationException;
 import com.theoryinpractise.halbuilder.api.RepresentationFactory;
-import com.theoryinpractise.halbuilder.api.RepresentationReader;
 import com.theoryinpractise.halbuilder.api.RepresentationWriter;
 
-public class DefaultRepresentationFactory extends RepresentationFactory {
+public class DefaultRepresentationFactory extends ParcelableRepresentationFactory {
 
-    private Map<ContentType, Class<? extends RepresentationReader>> representationReaders = Maps.newHashMap();
     private TreeMap<String, String> namespaces = Maps.newTreeMap(Ordering.usingToString());
-    private List<Link> links = Lists.newArrayList();
+    private List<ParcelableLink> links = Lists.newArrayList();
     private Set<URI> flags = Sets.newHashSet();
 
     public DefaultRepresentationFactory() {
-        this.representationReaders.put(new ContentType(HAL_JSON), JsonRepresentationReader.class);
+        super();
     }
 
-    public DefaultRepresentationFactory withReader(String contentType, Class<? extends RepresentationReader> readerClass) {
-        representationReaders.put(new ContentType(contentType), readerClass);
-        return this;
+    public DefaultRepresentationFactory(Parcel in) {
+        super();
+
+        // Must parallel order from writeToParcel
+
+        // TreeMap<String, String> namespaces
+        Bundle ns = in.readBundle();
+        for (String key : ns.keySet()) {
+            namespaces.put(key, ns.getString(key));
+        }
+
+        // private List<ParcelableLink> links
+        in.readTypedList(links, ParcelableLink.CREATOR);
+
+        // Set<URI> flags # URI implements Serializable
+        for (URI flag : (URI[]) in.readArray(null)) {
+            flags.add(flag);
+        }
     }
 
     @Override
@@ -55,7 +69,7 @@ public class DefaultRepresentationFactory extends RepresentationFactory {
 
     @Override
     public DefaultRepresentationFactory withLink(String rel, String href) {
-        links.add(new Link(this, rel, href));
+        links.add(new ParcelableLink(this, rel, href));
         return this;
     }
 
@@ -77,68 +91,78 @@ public class DefaultRepresentationFactory extends RepresentationFactory {
 
     @Override
     public Representation newRepresentation(String href) {
-        MutableRepresentation representation = new MutableRepresentation(this, href);
-
-        // Add factory standard namespaces
-        for (Map.Entry<String, String> entry : namespaces.entrySet()) {
-            representation.withNamespace(entry.getKey(), entry.getValue());
-        }
-
-        // Add factory standard links
-        for (Link link : links) {
-            representation.withLink(link.getRel(), link.getHref(), link.getName(), link.getTitle(), link.getHreflang(), link.getProfile());
-        }
-
-        return representation;
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public ReadableRepresentation readRepresentation(Reader reader) {
+    public ParcelableReadableRepresentation readRepresentation(Reader reader) {
         try {
             Reader bufferedReader = new BufferedReader(reader);
             bufferedReader.mark(1);
             char firstChar = (char) bufferedReader.read();
             bufferedReader.reset();
 
-            Class<? extends RepresentationReader> readerClass;
             switch (firstChar) {
-                case '{':
-                    readerClass = representationReaders.get(new ContentType(HAL_JSON));
-                    break;
-                case '<':
-                    readerClass = representationReaders.get(new ContentType(HAL_XML));
-                    break;
-                default:
-                    throw new RepresentationException("unrecognized initial character in stream: " + firstChar);
+            case '{':
+                // All is good... for now
+                break;
+            case '<':
+                throw new IllegalArgumentException("Unhandled ContentType: " + HAL_XML);
+            default:
+                throw new RepresentationException("unrecognized initial character in stream: " + firstChar);
             }
-            Constructor<? extends RepresentationReader> readerConstructor = readerClass.getConstructor(RepresentationFactory.class);
-            return readerConstructor.newInstance(this).read(bufferedReader);
-        } catch (Exception e) {
+            return new JsonRepresentationReader(this).read(bufferedReader);
+        }
+        catch (Exception e) {
             throw new RepresentationException(e);
         }
     }
 
     @Override
     public RepresentationWriter<String> lookupRenderer(String contentType) {
-
-//        for (Map.Entry<ContentType, Class<? extends RepresentationWriter>> entry : contentRenderers.entrySet()) {
-//            if (entry.getKey().matches(contentType)) {
-//                try {
-//                    return entry.getValue().newInstance();
-//                } catch (InstantiationException e) {
-//                    throw new RepresentationException(e);
-//                } catch (IllegalAccessException e) {
-//                    throw new RepresentationException(e);
-//                }
-//            }
-//        }
-
-        throw new IllegalArgumentException("Unsupported contentType: " + contentType);
-
+    	throw new UnsupportedOperationException();
     }
 
     public Set<URI> getFlags() {
         return ImmutableSet.copyOf(flags);
+    }
+
+    // *** Parcelable ***
+
+    public static final Parcelable.Creator<DefaultRepresentationFactory> CREATOR;
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel out, int parcelFlags) {
+        // TreeMap<String, String> namespaces
+        Bundle ns = new Bundle(namespaces.size());
+        for (Entry<String, String> entry : namespaces.entrySet()) {
+            ns.putString(entry.getKey(), entry.getValue());
+        }
+        out.writeBundle(ns);
+
+        // private List<ParcelableLink> links
+        out.writeTypedList(links);
+
+        // Set<URI> flags # URI implements Serializable
+        URI[] flagArray = new URI[flags.size()];
+        out.writeArray(flags.toArray(flagArray));
+    }
+
+    static {
+        CREATOR = new Parcelable.Creator<DefaultRepresentationFactory>() {
+            public DefaultRepresentationFactory createFromParcel(Parcel in) {
+                return new DefaultRepresentationFactory(in);
+            }
+
+            public DefaultRepresentationFactory[] newArray(int size) {
+                return new DefaultRepresentationFactory[size];
+            }
+        };
     }
 
 }
