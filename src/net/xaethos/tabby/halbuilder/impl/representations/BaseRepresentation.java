@@ -49,9 +49,7 @@ import com.theoryinpractise.halbuilder.api.RepresentationException;
 import com.theoryinpractise.halbuilder.api.RepresentationFactory;
 import com.theoryinpractise.halbuilder.api.RepresentationWriter;
 
-public abstract class BaseRepresentation
-        implements
-        ParcelableReadableRepresentation
+public abstract class BaseRepresentation implements ParcelableReadableRepresentation
 {
 
     public static final Ordering<Link> RELATABLE_ORDERING = Ordering.from(new Comparator<Link>() {
@@ -71,8 +69,7 @@ public abstract class BaseRepresentation
     protected ParcelableRepresentationFactory representationFactory;
     protected boolean hasNullProperties = false;
 
-    protected BaseRepresentation(ParcelableRepresentationFactory representationFactory)
-    {
+    protected BaseRepresentation(ParcelableRepresentationFactory representationFactory) {
         this.representationFactory = representationFactory;
     }
 
@@ -87,9 +84,7 @@ public abstract class BaseRepresentation
 
     @Override
     public Link getResourceLink() {
-        return Iterables.find(getLinks(),
-                              LinkPredicate.newLinkPredicate(Support.SELF),
-                              null);
+        return Iterables.find(getLinks(), LinkPredicate.newLinkPredicate(Support.SELF), null);
     }
 
     @Override
@@ -125,8 +120,7 @@ public abstract class BaseRepresentation
         // method with a boolean check
         for (String key : resources.keySet()) {
             for (Parcelable resource : resources.getParcelableArray(key)) {
-                linkBuilder.addAll(getLinksByRel((ParcelableReadableRepresentation) resource,
-                                                 curiedRel));
+                linkBuilder.addAll(getLinksByRel((ParcelableReadableRepresentation) resource, curiedRel));
             }
         }
 
@@ -134,9 +128,7 @@ public abstract class BaseRepresentation
     }
 
     @Override
-    public List<? extends ReadableRepresentation>
-            getResourcesByRel(final String rel)
-    {
+    public List<? extends ReadableRepresentation> getResourcesByRel(final String rel) {
         Support.checkRelType(rel);
 
         return ImmutableList.copyOf((ParcelableReadableRepresentation[]) resources.getParcelableArray(rel));
@@ -148,8 +140,7 @@ public abstract class BaseRepresentation
             return properties.get(name);
         }
         else {
-            throw new RepresentationException("Resource does not contain "
-                    + name);
+            throw new RepresentationException("Resource does not contain " + name);
         }
     }
 
@@ -163,27 +154,20 @@ public abstract class BaseRepresentation
         }
     }
 
-    private List<Link> getLinksByRel(ReadableRepresentation representation,
-            final String rel)
-    {
+    private List<Link> getLinksByRel(ReadableRepresentation representation, final String rel) {
         Support.checkRelType(rel);
-        return ImmutableList.copyOf(Iterables.filter(representation.getCanonicalLinks(),
-                                                     new Predicate<Link>() {
-                                                         @Override
-                                                         public boolean
-                                                                 apply(Link relatable)
-                                                         {
-                                                             return rel.equals(relatable.getRel())
-                                                                     || Iterables.contains(WHITESPACE_SPLITTER.split(relatable.getRel()),
-                                                                                           rel);
-                                                         }
-                                                     }));
+        return ImmutableList.copyOf(Iterables.filter(representation.getCanonicalLinks(), new Predicate<Link>() {
+            @Override
+            public boolean apply(Link relatable) {
+                return rel.equals(relatable.getRel())
+                        || Iterables.contains(WHITESPACE_SPLITTER.split(relatable.getRel()), rel);
+            }
+        }));
     }
 
     @Override
     public List<Link> getLinks() {
-        if (representationFactory.getFlags()
-                                 .contains(RepresentationFactory.COALESCE_LINKS)) {
+        if (representationFactory.getFlags().contains(RepresentationFactory.COALESCE_LINKS)) {
             return getCollatedLinks();
         }
         else {
@@ -228,8 +212,7 @@ public abstract class BaseRepresentation
                 }
             });
 
-            Function<Function<Link, String>, String> nameFunc = mkSortableJoinerForIterable(", ",
-                                                                                            hrefLinks);
+            Function<Function<Link, String>, String> nameFunc = mkSortableJoinerForIterable(", ", hrefLinks);
 
             String titles = nameFunc.apply(new Function<Link, String>() {
                 @Override
@@ -273,17 +256,15 @@ public abstract class BaseRepresentation
         return RELATABLE_ORDERING.sortedCopy(collatedLinks);
     }
 
-    private <T>
-            Function<Function<T, String>, String>
-            mkSortableJoinerForIterable(final String join, final Iterable<T> ts)
+    private <T> Function<Function<T, String>, String> mkSortableJoinerForIterable(final String join,
+            final Iterable<T> ts)
     {
         return new Function<Function<T, String>, String>() {
             @Override
             public String apply(Function<T, String> f) {
                 return Joiner.on(join)
                              .skipNulls()
-                             .join(usingToString().nullsFirst()
-                                                  .sortedCopy(newHashSet(transform(ts, f))));
+                             .join(usingToString().nullsFirst().sortedCopy(newHashSet(transform(ts, f))));
             }
         };
     }
@@ -300,10 +281,13 @@ public abstract class BaseRepresentation
     @Override
     public Map<String, Object> getProperties() {
         Bundle properties = this.properties;
+        Object value;
+
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
         for (String key : properties.keySet()) {
-            builder.put(key, properties.get(key));
+            value = properties.get(key);
+            if (value != null) builder.put(key, value);
         }
         return builder.build();
     }
@@ -345,8 +329,7 @@ public abstract class BaseRepresentation
             if (!rel.contains("://") && rel.contains(":")) {
                 String[] relPart = rel.split(":");
                 if (!namespaces.keySet().contains(relPart[0])) {
-                    throw new RepresentationException(format("Undeclared namespace in rel %s for resource",
-                                                             rel));
+                    throw new RepresentationException(format("Undeclared namespace in rel %s for resource", rel));
                 }
             }
         }
@@ -380,14 +363,11 @@ public abstract class BaseRepresentation
      */
     @Override
     public <T> T toClass(Class<T> anInterface) {
-        if (InterfaceContract.newInterfaceContract(anInterface)
-                             .isSatisfiedBy(this)) {
-            return InterfaceRenderer.newInterfaceRenderer(anInterface)
-                                    .render(this);
+        if (InterfaceContract.newInterfaceContract(anInterface).isSatisfiedBy(this)) {
+            return InterfaceRenderer.newInterfaceRenderer(anInterface).render(this);
         }
         else {
-            throw new RepresentationException("Unable to write representation to "
-                    + anInterface.getName());
+            throw new RepresentationException("Unable to write representation to " + anInterface.getName());
         }
     }
 
@@ -412,8 +392,7 @@ public abstract class BaseRepresentation
     public void toString(String contentType, Set<URI> flags, Writer writer) {
         validateNamespaces(this);
         RepresentationWriter<String> representationWriter = representationFactory.lookupRenderer(contentType);
-        ImmutableSet.Builder<URI> uriBuilder = ImmutableSet.<URI> builder()
-                                                           .addAll(representationFactory.getFlags());
+        ImmutableSet.Builder<URI> uriBuilder = ImmutableSet.<URI> builder().addAll(representationFactory.getFlags());
         if (flags != null) uriBuilder.addAll(flags);
         representationWriter.write(this, uriBuilder.build(), writer);
     }

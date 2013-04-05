@@ -2,6 +2,7 @@ package net.xaethos.tabby.fragment;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -13,15 +14,17 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.theoryinpractise.halbuilder.api.Link;
 
-public class RepresentationFragment extends Fragment
+public class RepresentationFragment extends Fragment implements View.OnClickListener
 {
     private static final String TAG = "RepresentationFragment";
     private static final String ARG_REPRESENTATION = "representation";
@@ -52,6 +55,7 @@ public class RepresentationFragment extends Fragment
     // ***** Instance fields
 
     private ParcelableReadableRepresentation mRepresentation;
+    private OnLinkFollowListener mLinkListener;
 
     // ***** Instance methods
 
@@ -88,6 +92,13 @@ public class RepresentationFragment extends Fragment
     // *** Fragment lifecycle
 
     @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+
+        if (activity instanceof OnLinkFollowListener) mLinkListener = (OnLinkFollowListener) activity;
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -101,6 +112,13 @@ public class RepresentationFragment extends Fragment
         View root = inflater.inflate(R.layout.fragment_resource, container, false);
         populate(getRepresentation(), root);
         return root;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if (mRepresentation != null) outState.putParcelable(ARG_REPRESENTATION, mRepresentation);
     }
 
     // *** Helpers
@@ -126,6 +144,7 @@ public class RepresentationFragment extends Fragment
     private void populate(ParcelableReadableRepresentation representation, View root) {
         if (representation == null || root == null) return;
         populateProperties(representation, root);
+        populateLinks(representation, root);
     }
 
     private void populateProperties(ParcelableReadableRepresentation representation, View root) {
@@ -144,7 +163,50 @@ public class RepresentationFragment extends Fragment
         }
     }
 
+    private void populateLinks(ParcelableReadableRepresentation representation, View root) {
+        ViewGroup layout = (ViewGroup) root.findViewById(R.id.representation_links_layout);
+        Activity activity = getActivity();
+        LayoutInflater inflater = activity.getLayoutInflater();
+
+        layout.removeAllViews();
+
+        List<Link> links = representation.getLinks();
+        for (Link link : links) {
+            View linkView = inflater.inflate(R.layout.view_representation_link, layout, false);
+            Button linkButton = (Button) linkView.findViewById(R.id.link_button);
+
+            String rel = link.getRel();
+            String title = link.getTitle();
+            if (TextUtils.isEmpty(title)) title = rel;
+
+            linkButton.setText(title);
+            linkButton.setOnClickListener(this);
+            linkButton.setTag(R.id.tag_link, link);
+
+            layout.addView(linkView);
+        }
+    }
+
+    // *** View.OnClickListener implementation
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+        case R.id.link_button:
+            if (mLinkListener != null) {
+                Link link = (Link) v.getTag(R.id.tag_link);
+                mLinkListener.onFollowLink(link);
+            }
+            break;
+        }
+    }
+
     // ***** Inner classes
+
+    public interface OnLinkFollowListener
+    {
+        void onFollowLink(Link link);
+    }
 
     class ApiGetRequestTask extends AsyncTask<URI, Void, ParcelableReadableRepresentation>
     {
