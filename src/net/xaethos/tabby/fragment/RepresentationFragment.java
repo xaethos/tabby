@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.theoryinpractise.halbuilder.api.Link;
+import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 
 public class RepresentationFragment extends Fragment implements View.OnClickListener
 {
@@ -165,14 +166,29 @@ public class RepresentationFragment extends Fragment implements View.OnClickList
 
     private void populateLinks(ParcelableReadableRepresentation representation, View root) {
         ViewGroup layout = (ViewGroup) root.findViewById(R.id.representation_links_layout);
+        View linkView;
         Activity activity = getActivity();
         LayoutInflater inflater = activity.getLayoutInflater();
 
         layout.removeAllViews();
 
+        for (Entry<String, ReadableRepresentation> entry : representation.getResources()) {
+            linkView = inflater.inflate(R.layout.view_representation_link, layout, false);
+            Button linkButton = (Button) linkView.findViewById(R.id.link_button);
+
+            String rel = entry.getKey();
+            Link self = entry.getValue().getResourceLink();
+
+            linkButton.setText(rel);
+            linkButton.setOnClickListener(this);
+            linkButton.setTag(R.id.tag_link, self);
+
+            layout.addView(linkView);
+        }
+
         List<Link> links = representation.getLinks();
         for (Link link : links) {
-            View linkView = inflater.inflate(R.layout.view_representation_link, layout, false);
+            linkView = inflater.inflate(R.layout.view_representation_link, layout, false);
             Button linkButton = (Button) linkView.findViewById(R.id.link_button);
 
             String rel = link.getRel();
@@ -185,6 +201,7 @@ public class RepresentationFragment extends Fragment implements View.OnClickList
 
             layout.addView(linkView);
         }
+
     }
 
     // *** View.OnClickListener implementation

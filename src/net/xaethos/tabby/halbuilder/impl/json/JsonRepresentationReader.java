@@ -12,6 +12,7 @@ import static net.xaethos.tabby.halbuilder.impl.api.Support.PROFILE;
 import static net.xaethos.tabby.halbuilder.impl.api.Support.TITLE;
 
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +33,7 @@ public class JsonRepresentationReader implements RepresentationReader
 {
     private ParcelableRepresentationFactory representationFactory;
 
-    public JsonRepresentationReader(ParcelableRepresentationFactory representationFactory)
-    {
+    public JsonRepresentationReader(ParcelableRepresentationFactory representationFactory) {
         this.representationFactory = representationFactory;
     }
 
@@ -81,13 +81,11 @@ public class JsonRepresentationReader implements RepresentationReader
                     Iterator<JsonNode> values = curieNode.elements();
                     while (values.hasNext()) {
                         JsonNode valueNode = values.next();
-                        namespaces.putString(valueNode.get(NAME).asText(),
-                                             valueNode.get(HREF).asText());
+                        namespaces.putString(valueNode.get(NAME).asText(), valueNode.get(HREF).asText());
                     }
                 }
                 else {
-                    namespaces.putString(curieNode.get(NAME).asText(),
-                                         curieNode.get(HREF).asText());
+                    namespaces.putString(curieNode.get(NAME).asText(), curieNode.get(HREF).asText());
                 }
             }
         }
@@ -95,14 +93,12 @@ public class JsonRepresentationReader implements RepresentationReader
 
     private void readLinks(List<ParcelableLink> links, JsonNode rootNode) {
         if (rootNode.has(LINKS)) {
-            Iterator<Map.Entry<String, JsonNode>> fields =
-                    rootNode.get(LINKS).fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.get(LINKS).fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> keyNode = fields.next();
                 if (!CURIE.equals((keyNode.getKey()))) {
                     if (keyNode.getValue().isArray()) {
-                        Iterator<JsonNode> values =
-                                keyNode.getValue().elements();
+                        Iterator<JsonNode> values = keyNode.getValue().elements();
                         while (values.hasNext()) {
                             JsonNode valueNode = values.next();
                             withJsonLink(links, keyNode, valueNode);
@@ -116,10 +112,7 @@ public class JsonRepresentationReader implements RepresentationReader
         }
     }
 
-    private void withJsonLink(List<ParcelableLink> links,
-            Map.Entry<String, JsonNode> keyNode,
-            JsonNode valueNode)
-    {
+    private void withJsonLink(List<ParcelableLink> links, Map.Entry<String, JsonNode> keyNode, JsonNode valueNode) {
         String rel = keyNode.getKey();
         String href = valueNode.get(HREF).asText();
         String name = optionalNodeValueAsText(valueNode, NAME);
@@ -127,13 +120,7 @@ public class JsonRepresentationReader implements RepresentationReader
         String hreflang = optionalNodeValueAsText(valueNode, HREFLANG);
         String profile = optionalNodeValueAsText(valueNode, PROFILE);
 
-        links.add(new ParcelableLink(representationFactory,
-                                     rel,
-                                     href,
-                                     name,
-                                     title,
-                                     hreflang,
-                                     profile));
+        links.add(new ParcelableLink(representationFactory, rel, href, name, title, hreflang, profile));
     }
 
     String optionalNodeValueAsText(JsonNode node, String key) {
@@ -164,23 +151,28 @@ public class JsonRepresentationReader implements RepresentationReader
 
     private void readResources(Bundle resources, JsonNode rootNode) {
         if (rootNode.has(EMBEDDED)) {
-            Iterator<Map.Entry<String, JsonNode>> fields =
-                    rootNode.get(EMBEDDED).fields();
+            Iterator<Map.Entry<String, JsonNode>> fields = rootNode.get(EMBEDDED).fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> keyNode = fields.next();
+                ParcelableReadableRepresentation[] subresources;
                 if (keyNode.getValue().isArray()) {
                     Iterator<JsonNode> values = keyNode.getValue().elements();
+                    List<ParcelableReadableRepresentation> subresourceList = new ArrayList<ParcelableReadableRepresentation>();
+
                     while (values.hasNext()) {
                         JsonNode valueNode = values.next();
-                        resources.putParcelable(keyNode.getKey(),
-                                                readResource(valueNode));
+                        subresourceList.add(readResource(valueNode));
                     }
+
+                    subresources = new ParcelableReadableRepresentation[subresourceList.size()];
+                    subresourceList.toArray(subresources);
                 }
                 else {
-                    resources.putParcelable(keyNode.getKey(),
-                                            readResource(keyNode.getValue()));
+                    subresources = new ParcelableReadableRepresentation[1];
+                    subresources[0] = readResource(keyNode.getValue());
                 }
 
+                resources.putParcelableArray(keyNode.getKey(), subresources);
             }
         }
     }

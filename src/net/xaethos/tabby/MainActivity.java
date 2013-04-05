@@ -38,6 +38,11 @@ public class MainActivity extends FragmentActivity implements OnLinkFollowListen
 
     @Override
     public void onFollowLink(Link link) {
+        if (link == null) {
+            Toast.makeText(this, "No link to follow", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (link.hasTemplate()) {
             Toast.makeText(this, "Can't follow templated links", Toast.LENGTH_SHORT).show();
             return;
