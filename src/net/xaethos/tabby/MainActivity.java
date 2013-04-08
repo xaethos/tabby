@@ -3,7 +3,7 @@ package net.xaethos.tabby;
 import java.io.IOException;
 import java.net.URI;
 
-import net.xaethos.tabby.fragment.RepresentationFragment.OnLinkFollowListener;
+import net.xaethos.tabby.fragment.RepresentationFragment;
 import net.xaethos.tabby.fragment.SimpleRepresentationFragment;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import net.xaethos.tabby.net.ApiRequest;
@@ -21,7 +21,7 @@ import android.widget.Toast;
 
 import com.theoryinpractise.halbuilder.api.Link;
 
-public class MainActivity extends FragmentActivity implements OnLinkFollowListener
+public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
 {
     private static final String TAG = "MainActivity";
 
@@ -80,7 +80,7 @@ public class MainActivity extends FragmentActivity implements OnLinkFollowListen
         if (mRepresentation != null) outState.putParcelable(ARG_REPRESENTATION, mRepresentation);
     }
 
-    // *** OnLinkFollowListener implementation
+    // *** RepresentationFragment.OnLinkFollowListener implementation
 
     @Override
     public void onFollowLink(Link link) {

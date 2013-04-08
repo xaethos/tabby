@@ -5,12 +5,17 @@ import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepre
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.view.View;
+import android.widget.AdapterView;
 
 import com.theoryinpractise.halbuilder.api.Link;
+import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 
 public class SimpleRepresentationFragment extends ListFragment
+        implements
+        RepresentationFragment,
+        AdapterView.OnItemClickListener
 {
-    private static final String TAG = "SimpleRepresentationFragment";
     private static final String ARG_REPRESENTATION = "representation";
 
     // ***** Class methods
@@ -26,7 +31,8 @@ public class SimpleRepresentationFragment extends ListFragment
     // ***** Instance fields
 
     private ParcelableReadableRepresentation mRepresentation;
-    private OnLinkFollowListener mLinkListener;
+    private RepresentationFragment.OnLinkFollowListener mLinkListener;
+    private SimpleRepresentationAdapter mAdapter;
 
     // ***** Instance methods
 
@@ -57,28 +63,34 @@ public class SimpleRepresentationFragment extends ListFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setListAdapter(new SimpleRepresentationAdapter(getActivity(), getRepresentation()));
+        mAdapter = new SimpleRepresentationAdapter(getActivity(), getRepresentation());
+        setListAdapter(mAdapter);
     }
 
-    // *** View.OnClickListener implementation
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-//    @Override
-//    public void onClick(View v) {
-//        switch (v.getId()) {
-//        case R.id.link_button:
-//            if (mLinkListener != null) {
-//                Link link = (Link) v.getTag(R.id.tag_link);
-//                mLinkListener.onFollowLink(link);
-//            }
-//            break;
-//        }
-//    }
+        getListView().setOnItemClickListener(this);
+    }
 
-    // ***** Inner classes / interfaces
+    // *** AdapterView.OnItemClickListener implementation
 
-    public interface OnLinkFollowListener
-    {
-        void onFollowLink(Link link);
+    @Override
+    public void onItemClick(AdapterView<?> listView, View itemView, int position, long id) {
+        Object o = mAdapter.getItem(position);
+        Link link = null;
+
+        if (o instanceof Link) {
+            link = (Link) o;
+        }
+        else if (o instanceof ReadableRepresentation) {
+            link = ((ReadableRepresentation) o).getResourceLink();
+        }
+
+        if (link != null && mLinkListener != null) {
+            mLinkListener.onFollowLink(link);
+        }
     }
 
 }
