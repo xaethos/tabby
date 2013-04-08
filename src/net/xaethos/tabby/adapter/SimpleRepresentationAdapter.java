@@ -2,17 +2,16 @@ package net.xaethos.tabby.adapter;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
+import net.xaethos.tabby.view.SimpleRepresentationView;
 import android.content.Context;
 import android.widget.ArrayAdapter;
 import android.widget.SimpleAdapter;
 
 import com.commonsware.cwac.merge.MergeAdapter;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.theoryinpractise.halbuilder.api.Link;
 import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
@@ -37,16 +36,7 @@ public class SimpleRepresentationAdapter extends MergeAdapter
             rels.add(link.getRel());
         }
 
-        List<Map<String, Object>> propertyData = Lists.newArrayList();
-        for (Entry<String, Object> entry : representation.getProperties().entrySet()) {
-            Map<String, Object> property = Maps.newHashMap();
-            property.put(NAME, entry.getKey());
-            property.put(VALUE, entry.getValue());
-            propertyData.add(property);
-        }
-        if (!propertyData.isEmpty()) {
-            addAdapter(new PropertyAdapter(context, propertyData));
-        }
+        addView(new SimpleRepresentationView(context, representation), false);
 
         for (String rel : rels) {
             List<ReadableRepresentation> resources = Lists.newArrayList(representation.getResourcesByRel(rel));
