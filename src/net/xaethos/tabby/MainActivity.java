@@ -3,8 +3,8 @@ package net.xaethos.tabby;
 import java.io.IOException;
 import java.net.URI;
 
-import net.xaethos.tabby.fragment.RepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment.OnLinkFollowListener;
+import net.xaethos.tabby.fragment.SimpleRepresentationFragment;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import net.xaethos.tabby.net.ApiRequest;
 import android.content.Intent;
@@ -124,7 +124,7 @@ public class MainActivity extends FragmentActivity implements OnLinkFollowListen
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = RepresentationFragment.withRepresentation(representation);
+            Fragment fragment = SimpleRepresentationFragment.withRepresentation(representation);
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);

@@ -131,7 +131,9 @@ public abstract class BaseRepresentation implements ParcelableReadableRepresenta
     public List<? extends ReadableRepresentation> getResourcesByRel(final String rel) {
         Support.checkRelType(rel);
 
-        return ImmutableList.copyOf((ParcelableReadableRepresentation[]) resources.getParcelableArray(rel));
+        ParcelableReadableRepresentation[] relResources = (ParcelableReadableRepresentation[]) resources.getParcelableArray(rel);
+        if (relResources == null) relResources = new ParcelableReadableRepresentation[0];
+        return ImmutableList.copyOf(relResources);
     }
 
     @Override
