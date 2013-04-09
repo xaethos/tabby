@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import net.xaethos.tabby.R;
+import net.xaethos.tabby.halbuilder.impl.api.Support;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import android.app.Activity;
 import android.os.Bundle;
@@ -23,7 +24,10 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     // *** Argument/State keys
     protected static final String ARG_REPRESENTATION = "representation";
+
     protected static final String ARG_FRAGMENT_LAYOUT = "fragment_layout";
+    protected static final String ARG_PROPERTY_LAYOUT = "property_layout";
+    protected static final String ARG_LINK_LAYOUT = "link_layout";
 
     // ***** Instance fields
 
@@ -51,11 +55,15 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     protected int getPropertyItemRes() {
-        return R.layout.default_property_item;
+        return getArguments().getInt(ARG_PROPERTY_LAYOUT);
     }
 
     protected int getLinkItemRes() {
-        return R.layout.default_link_item;
+        return getArguments().getInt(ARG_LINK_LAYOUT);
+    }
+
+    protected boolean isViewableRel(String rel) {
+        return !(Support.SELF.equals(rel) || Support.CURIE.equals(rel) || Support.PROFILE.equals(rel));
     }
 
     // *** Fragment lifecycle
@@ -138,6 +146,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         // Resources
         for (Entry<String, ReadableRepresentation> entry : representation.getResources()) {
             String rel = entry.getKey();
+            if (!isViewableRel(rel)) continue;
             ParcelableReadableRepresentation resource = (ParcelableReadableRepresentation) entry.getValue();
             View resourceView = getResourceView(inflater, layout, representation, rel, resource);
             if (resourceView != null) {
@@ -150,6 +159,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
         // Links
         for (Link link : representation.getLinks()) {
+            if (!isViewableRel(link.getRel())) continue;
             View linkView = getLinkView(inflater, layout, representation, link);
             if (linkView != null) {
                 bindLinkView(linkView, representation, link);
@@ -251,6 +261,9 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             Bundle args = new Bundle();
             // Set defaults...
             args.putInt(ARG_FRAGMENT_LAYOUT, R.layout.default_representation_view);
+            args.putInt(ARG_PROPERTY_LAYOUT, R.layout.default_property_item);
+            args.putInt(ARG_LINK_LAYOUT, R.layout.default_link_item);
+
             mArgs = args;
         }
 
@@ -261,6 +274,16 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
         public ArgumentsBuilder setFragmentView(int resId) {
             mArgs.putInt(ARG_FRAGMENT_LAYOUT, resId);
+            return this;
+        }
+
+        public ArgumentsBuilder setPropertyView(int resId) {
+            mArgs.putInt(ARG_PROPERTY_LAYOUT, resId);
+            return this;
+        }
+
+        public ArgumentsBuilder setLinkView(int resId) {
+            mArgs.putInt(ARG_LINK_LAYOUT, resId);
             return this;
         }
 
