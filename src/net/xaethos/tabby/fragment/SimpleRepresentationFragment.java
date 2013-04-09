@@ -102,7 +102,7 @@ public class SimpleRepresentationFragment extends ListFragment
     @Override
     public void bindRepresentation(View view, ParcelableReadableRepresentation representation) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -122,7 +122,7 @@ public class SimpleRepresentationFragment extends ListFragment
             Object value)
     {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -138,7 +138,28 @@ public class SimpleRepresentationFragment extends ListFragment
     @Override
     public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link) {
         // TODO Auto-generated method stub
-        
+
+    }
+
+    @Override
+    public View getResourceView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource)
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void bindResourceView(View propertyView,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource)
+    {
+        // TODO Auto-generated method stub
+
     }
 
 }

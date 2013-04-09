@@ -1,9 +1,7 @@
 package net.xaethos.tabby.fragment;
 
-import java.util.List;
 import java.util.Map;
-
-import com.theoryinpractise.halbuilder.api.Link;
+import java.util.Map.Entry;
 
 import net.xaethos.tabby.R;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
@@ -15,6 +13,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.theoryinpractise.halbuilder.api.Link;
+import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 
 public class BaseRepresentationFragment extends Fragment implements RepresentationFragment, View.OnClickListener
 {
@@ -100,30 +101,13 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         }
     }
 
-    private void bindLinks(View view, ParcelableReadableRepresentation representation) {
-        List<Link> links = representation.getLinks();
-
-        ViewGroup linksLayout = (ViewGroup) view.findViewById(R.id.links_layout);
-        LayoutInflater inflater = LayoutInflater.from(getActivity());
-
-        if (linksLayout != null) {
-            for (Link link : links) {
-                View linkView = getLinkView(inflater, linksLayout, representation, link);
-                bindLinkView(linkView, representation, link);
-                if (linkView.getParent() == null) {
-                    linksLayout.addView(linkView);
-                }
-            }
-        }
-    }
-
     public View getPropertyView(LayoutInflater inflater,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String name)
     {
         View view = getView().findViewWithTag(propertyTag(name));
-        if (view == null) {
+        if (view == null && container != null) {
             view = inflater.inflate(getPropertyItemRes(), container, false);
         }
         return view;
@@ -147,13 +131,42 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         }
     }
 
+    private void bindLinks(View view, ParcelableReadableRepresentation representation) {
+        ViewGroup layout = (ViewGroup) view.findViewById(R.id.links_layout);
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+
+        // Resources
+        for (Entry<String, ReadableRepresentation> entry : representation.getResources()) {
+            String rel = entry.getKey();
+            ParcelableReadableRepresentation resource = (ParcelableReadableRepresentation) entry.getValue();
+            View resourceView = getResourceView(inflater, layout, representation, rel, resource);
+            if (resourceView != null) {
+                bindResourceView(resourceView, representation, rel, resource);
+                if (resourceView.getParent() == null && layout != null) {
+                    layout.addView(resourceView);
+                }
+            }
+        }
+
+        // Links
+        for (Link link : representation.getLinks()) {
+            View linkView = getLinkView(inflater, layout, representation, link);
+            if (linkView != null) {
+                bindLinkView(linkView, representation, link);
+                if (linkView.getParent() == null && layout != null) {
+                    layout.addView(linkView);
+                }
+            }
+        }
+    }
+
     public View getLinkView(LayoutInflater inflater,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             Link link)
     {
         View view = getView().findViewWithTag(linkTag(link.getRel()));
-        if (view == null) {
+        if (view == null && container != null) {
             view = inflater.inflate(getLinkItemRes(), container, false);
         }
         return view;
@@ -171,6 +184,41 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
         childView.setOnClickListener(this);
         childView.setTag(R.id.tag_link, link);
+    }
+
+    public View getResourceView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource)
+    {
+        View view = getView().findViewWithTag(linkTag(rel));
+        if (view == null && container != null) {
+            view = inflater.inflate(getLinkItemRes(), container, false);
+            ((TextView) view).setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        }
+        return view;
+    }
+
+    public void bindResourceView(View propertyView,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource)
+    {
+        View childView;
+        Link link = resource.getResourceLink();
+
+        childView = propertyView.findViewById(R.id.link_title);
+        if (childView instanceof TextView) {
+            String title = link.getTitle();
+            if (TextUtils.isEmpty(title)) title = rel;
+            ((TextView) childView).setText(title);
+        }
+
+        if (link != null) {
+            childView.setOnClickListener(this);
+            childView.setTag(R.id.tag_link, link);
+        }
     }
 
     // *** View.OnClickListener implementation

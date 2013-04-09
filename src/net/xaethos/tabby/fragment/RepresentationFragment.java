@@ -35,6 +35,17 @@ public interface RepresentationFragment
             ParcelableReadableRepresentation representation,
             Link link);
 
+    public View getResourceView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource);
+
+    public void bindResourceView(View propertyView,
+            ParcelableReadableRepresentation representation,
+            String rel,
+            ParcelableReadableRepresentation resource);
+
     // ***** Inner classes
 
     public interface OnLinkFollowListener
