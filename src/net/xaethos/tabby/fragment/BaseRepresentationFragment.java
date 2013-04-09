@@ -28,6 +28,8 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     protected static final String ARG_FRAGMENT_LAYOUT = "fragment_layout";
     protected static final String ARG_PROPERTY_LAYOUT = "property_layout";
     protected static final String ARG_LINK_LAYOUT = "link_layout";
+    protected static final String ARG_PROPERTY_LAYOUT_MAP = "property_layout_map";
+    protected static final String ARG_LINK_LAYOUT_MAP = "link_layout_map";
 
     // ***** Instance fields
 
@@ -54,12 +56,21 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         return getArguments().getInt(ARG_FRAGMENT_LAYOUT);
     }
 
-    protected int getPropertyItemRes() {
-        return getArguments().getInt(ARG_PROPERTY_LAYOUT);
+    protected int getPropertyItemRes(String name) {
+        Bundle args = getArguments();
+        Bundle map = args.getBundle(ARG_PROPERTY_LAYOUT_MAP);
+
+        if (map.containsKey(name)) return map.getInt(name);
+        return args.getInt(ARG_PROPERTY_LAYOUT);
     }
 
-    protected int getLinkItemRes() {
-        return getArguments().getInt(ARG_LINK_LAYOUT);
+    protected int getLinkItemRes(String rel) {
+        Bundle args = getArguments();
+        Bundle map = args.getBundle(ARG_LINK_LAYOUT_MAP);
+
+        if (map.containsKey(rel)) return map.getInt(rel);
+
+        return args.getInt(ARG_LINK_LAYOUT);
     }
 
     protected boolean isViewableRel(String rel) {
@@ -116,7 +127,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     {
         View view = getView().findViewWithTag(propertyTag(name));
         if (view == null && container != null) {
-            view = inflater.inflate(getPropertyItemRes(), container, false);
+            view = inflater.inflate(getPropertyItemRes(name), container, false);
         }
         return view;
     }
@@ -175,9 +186,10 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             ParcelableReadableRepresentation representation,
             Link link)
     {
-        View view = getView().findViewWithTag(linkTag(link.getRel()));
+        String rel = link.getRel();
+        View view = getView().findViewWithTag(linkTag(rel));
         if (view == null && container != null) {
-            view = inflater.inflate(getLinkItemRes(), container, false);
+            view = inflater.inflate(getLinkItemRes(rel), container, false);
         }
         return view;
     }
@@ -204,8 +216,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     {
         View view = getView().findViewWithTag(linkTag(rel));
         if (view == null && container != null) {
-            view = inflater.inflate(getLinkItemRes(), container, false);
-            ((TextView) view).setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            view = inflater.inflate(getLinkItemRes(rel), container, false);
         }
         return view;
     }
@@ -262,7 +273,9 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             // Set defaults...
             args.putInt(ARG_FRAGMENT_LAYOUT, R.layout.default_representation_view);
             args.putInt(ARG_PROPERTY_LAYOUT, R.layout.default_property_item);
+            args.putBundle(ARG_PROPERTY_LAYOUT_MAP, new Bundle());
             args.putInt(ARG_LINK_LAYOUT, R.layout.default_link_item);
+            args.putBundle(ARG_LINK_LAYOUT_MAP, new Bundle());
 
             mArgs = args;
         }
@@ -277,13 +290,23 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             return this;
         }
 
-        public ArgumentsBuilder setPropertyView(int resId) {
+        public ArgumentsBuilder setDefaultPropertyView(int resId) {
             mArgs.putInt(ARG_PROPERTY_LAYOUT, resId);
             return this;
         }
 
-        public ArgumentsBuilder setLinkView(int resId) {
+        public ArgumentsBuilder setPropertyView(String name, int resId) {
+            mArgs.getBundle(ARG_PROPERTY_LAYOUT_MAP).putInt(name, resId);
+            return this;
+        }
+
+        public ArgumentsBuilder setDefaultLinkView(int resId) {
             mArgs.putInt(ARG_LINK_LAYOUT, resId);
+            return this;
+        }
+
+        public ArgumentsBuilder setLinkView(String rel, int resId) {
+            mArgs.getBundle(ARG_LINK_LAYOUT_MAP).putInt(rel, resId);
             return this;
         }
 

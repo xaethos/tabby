@@ -137,7 +137,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     private Bundle getFragmentArguments(ParcelableReadableRepresentation representation) {
         BaseRepresentationFragment.ArgumentsBuilder builder = new BaseRepresentationFragment.ArgumentsBuilder();
-        builder.setRepresentation(representation);
+        builder.setRepresentation(representation).setLinkView("ht:post", R.layout.post_link_item);
 
         String href = representation.getResourceLink().getHref();
 
