@@ -161,6 +161,18 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         ViewGroup layout = (ViewGroup) view.findViewById(R.id.links_layout);
         LayoutInflater inflater = LayoutInflater.from(getActivity());
 
+        // Links
+        for (Link link : representation.getLinks()) {
+            if (!isViewableRel(link.getRel())) continue;
+            View linkView = getLinkView(inflater, view, layout, representation, link);
+            if (linkView != null) {
+                bindLinkView(linkView, representation, link);
+                if (linkView.getParent() == null && layout != null) {
+                    layout.addView(linkView);
+                }
+            }
+        }
+
         // Resources
         for (Entry<String, ReadableRepresentation> entry : representation.getResources()) {
             String rel = entry.getKey();
@@ -171,18 +183,6 @@ public class BaseRepresentationFragment extends Fragment implements Representati
                 bindResourceView(resourceView, representation, rel, resource);
                 if (resourceView.getParent() == null && layout != null) {
                     layout.addView(resourceView);
-                }
-            }
-        }
-
-        // Links
-        for (Link link : representation.getLinks()) {
-            if (!isViewableRel(link.getRel())) continue;
-            View linkView = getLinkView(inflater, view, layout, representation, link);
-            if (linkView != null) {
-                bindLinkView(linkView, representation, link);
-                if (linkView.getParent() == null && layout != null) {
-                    layout.addView(linkView);
                 }
             }
         }
@@ -249,12 +249,13 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             ((TextView) childView).setText(title);
         }
 
-        bindProperties(resourceView, resource);
-
         if (link != null) {
             resourceView.setOnClickListener(this);
             resourceView.setTag(R.id.tag_link, link);
         }
+
+        bindProperties(resourceView, resource);
+        bindLinks(resourceView, resource);
     }
 
     // *** View.OnClickListener implementation
