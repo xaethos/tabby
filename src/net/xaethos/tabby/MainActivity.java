@@ -3,8 +3,8 @@ package net.xaethos.tabby;
 import java.io.IOException;
 import java.net.URI;
 
+import net.xaethos.tabby.fragment.BaseRepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment;
-import net.xaethos.tabby.fragment.SimpleRepresentationFragment;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import net.xaethos.tabby.net.ApiRequest;
 import android.content.Intent;
@@ -23,6 +23,8 @@ import com.theoryinpractise.halbuilder.api.Link;
 
 public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
 {
+    // ***** Constants
+
     private static final String TAG = "MainActivity";
 
     // State keys
@@ -124,12 +126,26 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = SimpleRepresentationFragment.withRepresentation(representation);
+            Fragment fragment = new BaseRepresentationFragment();
+            fragment.setArguments(getFragmentArguments(representation));
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);
             transaction.commit();
         }
+    }
+
+    private Bundle getFragmentArguments(ParcelableReadableRepresentation representation) {
+        BaseRepresentationFragment.ArgumentsBuilder builder = new BaseRepresentationFragment.ArgumentsBuilder();
+        builder.setRepresentation(representation);
+
+        String href = representation.getResourceLink().getHref();
+
+        if ("/".equals(href)) {
+            builder.setFragmentView(R.layout.root_representation_view);
+        }
+
+        return builder.build();
     }
 
     // ***** Inner classes

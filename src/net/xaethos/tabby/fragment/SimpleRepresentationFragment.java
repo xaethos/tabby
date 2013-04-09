@@ -5,7 +5,9 @@ import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepre
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import com.theoryinpractise.halbuilder.api.Link;
@@ -36,7 +38,7 @@ public class SimpleRepresentationFragment extends ListFragment
 
     // ***** Instance methods
 
-    private ParcelableReadableRepresentation getRepresentation() {
+    public ParcelableReadableRepresentation getRepresentation() {
         if (mRepresentation == null) {
             Bundle args = getArguments();
             if (args != null) {
@@ -44,6 +46,10 @@ public class SimpleRepresentationFragment extends ListFragment
             }
         }
         return mRepresentation;
+    }
+
+    public void setRepresentation(ParcelableReadableRepresentation representation) {
+        mRepresentation = representation;
     }
 
     // *** Fragment lifecycle
@@ -91,6 +97,32 @@ public class SimpleRepresentationFragment extends ListFragment
         if (link != null && mLinkListener != null) {
             mLinkListener.onFollowLink(link);
         }
+    }
+
+    @Override
+    public void bindRepresentation(View view, ParcelableReadableRepresentation representation) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public View getPropertyView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            String name)
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void bindPropertyView(View propertyView,
+            ParcelableReadableRepresentation representation,
+            String name,
+            Object value)
+    {
+        // TODO Auto-generated method stub
+        
     }
 
 }
