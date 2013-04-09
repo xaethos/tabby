@@ -170,6 +170,10 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
                 setRepresentation(result);
                 loadRepresentationFragment(result);
             }
+            else {
+                Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
+                finish();
+            }
         }
 
     }
