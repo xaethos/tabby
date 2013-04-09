@@ -107,6 +107,7 @@ public class SimpleRepresentationFragment extends ListFragment
 
     @Override
     public View getPropertyView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String name)
@@ -127,6 +128,7 @@ public class SimpleRepresentationFragment extends ListFragment
 
     @Override
     public View getLinkView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             Link link)
@@ -143,6 +145,7 @@ public class SimpleRepresentationFragment extends ListFragment
 
     @Override
     public View getResourceView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String rel,

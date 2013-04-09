@@ -38,6 +38,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     // ***** Instance methods
 
+    @Override
     public ParcelableReadableRepresentation getRepresentation() {
         if (mRepresentation == null) {
             Bundle args = getArguments();
@@ -48,6 +49,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         return mRepresentation;
     }
 
+    @Override
     public void setRepresentation(ParcelableReadableRepresentation representation) {
         mRepresentation = representation;
     }
@@ -98,6 +100,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     // *** View binding
 
+    @Override
     public void bindRepresentation(View view, ParcelableReadableRepresentation representation) {
         bindProperties(view, representation);
         bindLinks(view, representation);
@@ -109,29 +112,33 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         ViewGroup propertiesLayout = (ViewGroup) view.findViewById(R.id.properties_layout);
         LayoutInflater inflater = LayoutInflater.from(getActivity());
 
-        if (propertiesLayout != null) {
-            for (String name : properties.keySet()) {
-                View propertyView = getPropertyView(inflater, propertiesLayout, representation, name);
+        for (String name : properties.keySet()) {
+            View propertyView = getPropertyView(inflater, view, propertiesLayout, representation, name);
+            if (propertyView != null) {
                 bindPropertyView(propertyView, representation, name, properties.get(name));
-                if (propertyView.getParent() == null) {
+                if (propertyView.getParent() == null && propertiesLayout != null) {
                     propertiesLayout.addView(propertyView);
                 }
             }
         }
+
     }
 
+    @Override
     public View getPropertyView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String name)
     {
-        View view = getView().findViewWithTag(propertyTag(name));
+        View view = rootView.findViewWithTag(propertyTag(name));
         if (view == null && container != null) {
             view = inflater.inflate(getPropertyItemRes(name), container, false);
         }
         return view;
     }
 
+    @Override
     public void bindPropertyView(View propertyView,
             ParcelableReadableRepresentation representation,
             String name,
@@ -159,7 +166,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             String rel = entry.getKey();
             if (!isViewableRel(rel)) continue;
             ParcelableReadableRepresentation resource = (ParcelableReadableRepresentation) entry.getValue();
-            View resourceView = getResourceView(inflater, layout, representation, rel, resource);
+            View resourceView = getResourceView(inflater, view, layout, representation, rel, resource);
             if (resourceView != null) {
                 bindResourceView(resourceView, representation, rel, resource);
                 if (resourceView.getParent() == null && layout != null) {
@@ -171,7 +178,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         // Links
         for (Link link : representation.getLinks()) {
             if (!isViewableRel(link.getRel())) continue;
-            View linkView = getLinkView(inflater, layout, representation, link);
+            View linkView = getLinkView(inflater, view, layout, representation, link);
             if (linkView != null) {
                 bindLinkView(linkView, representation, link);
                 if (linkView.getParent() == null && layout != null) {
@@ -181,34 +188,39 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         }
     }
 
+    @Override
     public View getLinkView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             Link link)
     {
         String rel = link.getRel();
-        View view = getView().findViewWithTag(linkTag(rel));
+        View view = rootView.findViewWithTag(linkTag(rel));
         if (view == null && container != null) {
             view = inflater.inflate(getLinkItemRes(rel), container, false);
         }
         return view;
     }
 
-    public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link) {
+    @Override
+    public void bindLinkView(View linkView, ParcelableReadableRepresentation representation, Link link) {
         View childView;
 
-        childView = propertyView.findViewById(R.id.link_title);
+        childView = linkView.findViewById(R.id.link_title);
         if (childView instanceof TextView) {
             String title = link.getTitle();
             if (TextUtils.isEmpty(title)) title = link.getRel();
             ((TextView) childView).setText(title);
         }
 
-        childView.setOnClickListener(this);
-        childView.setTag(R.id.tag_link, link);
+        linkView.setOnClickListener(this);
+        linkView.setTag(R.id.tag_link, link);
     }
 
+    @Override
     public View getResourceView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String rel,
@@ -221,7 +233,8 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         return view;
     }
 
-    public void bindResourceView(View propertyView,
+    @Override
+    public void bindResourceView(View resourceView,
             ParcelableReadableRepresentation representation,
             String rel,
             ParcelableReadableRepresentation resource)
@@ -229,16 +242,18 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         View childView;
         Link link = resource.getResourceLink();
 
-        childView = propertyView.findViewById(R.id.link_title);
+        childView = resourceView.findViewById(R.id.link_title);
         if (childView instanceof TextView) {
             String title = link.getTitle();
             if (TextUtils.isEmpty(title)) title = rel;
             ((TextView) childView).setText(title);
         }
 
+        bindProperties(resourceView, resource);
+
         if (link != null) {
-            childView.setOnClickListener(this);
-            childView.setTag(R.id.tag_link, link);
+            resourceView.setOnClickListener(this);
+            resourceView.setTag(R.id.tag_link, link);
         }
     }
 

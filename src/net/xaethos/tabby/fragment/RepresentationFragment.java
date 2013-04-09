@@ -17,6 +17,7 @@ public interface RepresentationFragment
     public void bindRepresentation(View view, ParcelableReadableRepresentation representation);
 
     public View getPropertyView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String name);
@@ -27,15 +28,15 @@ public interface RepresentationFragment
             Object value);
 
     public View getLinkView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             Link link);
 
-    public void bindLinkView(View propertyView,
-            ParcelableReadableRepresentation representation,
-            Link link);
+    public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link);
 
     public View getResourceView(LayoutInflater inflater,
+            View rootView,
             ViewGroup container,
             ParcelableReadableRepresentation representation,
             String rel,
