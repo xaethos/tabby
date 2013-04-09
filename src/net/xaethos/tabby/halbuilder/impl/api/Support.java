@@ -24,7 +24,7 @@ public class Support {
     public static final String PROFILE = "profile";
 
     public static void checkRelType(String rel) {
-        Preconditions.checkArgument(TextUtils.isEmpty(rel), "Provided rel should not be null nor empty.");
+        Preconditions.checkArgument(!TextUtils.isEmpty(rel), "Provided rel should not be null nor empty.");
         Preconditions.checkArgument(!rel.contains(" "), "Provided rel value should be a single rel type, as defined by http://tools.ietf.org/html/rfc5988");
     }
 
