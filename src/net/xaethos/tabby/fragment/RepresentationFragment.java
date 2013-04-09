@@ -26,6 +26,15 @@ public interface RepresentationFragment
             String name,
             Object value);
 
+    public View getLinkView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            Link link);
+
+    public void bindLinkView(View propertyView,
+            ParcelableReadableRepresentation representation,
+            Link link);
+
     // ***** Inner classes
 
     public interface OnLinkFollowListener

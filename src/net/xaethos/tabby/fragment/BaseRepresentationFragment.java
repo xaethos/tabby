@@ -1,18 +1,22 @@
 package net.xaethos.tabby.fragment;
 
+import java.util.List;
 import java.util.Map;
+
+import com.theoryinpractise.halbuilder.api.Link;
 
 import net.xaethos.tabby.R;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class BaseRepresentationFragment extends Fragment implements RepresentationFragment
+public class BaseRepresentationFragment extends Fragment implements RepresentationFragment, View.OnClickListener
 {
     // ***** Constants
 
@@ -49,6 +53,10 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         return R.layout.default_property_item;
     }
 
+    protected int getLinkItemRes() {
+        return R.layout.default_link_item;
+    }
+
     // *** Fragment lifecycle
 
     @Override
@@ -72,6 +80,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     public void bindRepresentation(View view, ParcelableReadableRepresentation representation) {
         bindProperties(view, representation);
+        bindLinks(view, representation);
     }
 
     private void bindProperties(View view, ParcelableReadableRepresentation representation) {
@@ -86,6 +95,23 @@ public class BaseRepresentationFragment extends Fragment implements Representati
                 bindPropertyView(propertyView, representation, name, properties.get(name));
                 if (propertyView.getParent() == null) {
                     propertiesLayout.addView(propertyView);
+                }
+            }
+        }
+    }
+
+    private void bindLinks(View view, ParcelableReadableRepresentation representation) {
+        List<Link> links = representation.getLinks();
+
+        ViewGroup linksLayout = (ViewGroup) view.findViewById(R.id.links_layout);
+        LayoutInflater inflater = LayoutInflater.from(getActivity());
+
+        if (linksLayout != null) {
+            for (Link link : links) {
+                View linkView = getLinkView(inflater, linksLayout, representation, link);
+                bindLinkView(linkView, representation, link);
+                if (linkView.getParent() == null) {
+                    linksLayout.addView(linkView);
                 }
             }
         }
@@ -121,10 +147,50 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         }
     }
 
+    public View getLinkView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            Link link)
+    {
+        View view = getView().findViewWithTag(linkTag(link.getRel()));
+        if (view == null) {
+            view = inflater.inflate(getLinkItemRes(), container, false);
+        }
+        return view;
+    }
+
+    public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link) {
+        View childView;
+
+        childView = propertyView.findViewById(R.id.link_title);
+        if (childView instanceof TextView) {
+            String title = link.getTitle();
+            if (TextUtils.isEmpty(title)) title = link.getRel();
+            ((TextView) childView).setText(title);
+        }
+
+        childView.setOnClickListener(this);
+        childView.setTag(R.id.tag_link, link);
+    }
+
+    // *** View.OnClickListener implementation
+
+    @Override
+    public void onClick(View v) {
+        if (mLinkListener != null) {
+            Link link = (Link) v.getTag(R.id.tag_link);
+            if (link != null) mLinkListener.onFollowLink(link);
+        }
+    }
+
     // *** Helpers
 
     protected String propertyTag(String name) {
         return "property:" + name;
+    }
+
+    protected String linkTag(String name) {
+        return "rel:" + name;
     }
 
     // ***** Inner classes

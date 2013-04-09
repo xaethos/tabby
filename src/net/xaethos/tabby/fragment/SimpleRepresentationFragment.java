@@ -125,4 +125,20 @@ public class SimpleRepresentationFragment extends ListFragment
         
     }
 
+    @Override
+    public View getLinkView(LayoutInflater inflater,
+            ViewGroup container,
+            ParcelableReadableRepresentation representation,
+            Link link)
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link) {
+        // TODO Auto-generated method stub
+        
+    }
+
 }
