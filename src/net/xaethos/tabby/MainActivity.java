@@ -3,8 +3,8 @@ package net.xaethos.tabby;
 import java.io.IOException;
 import java.net.URI;
 
+import net.xaethos.tabby.fragment.BaseRepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment;
-import net.xaethos.tabby.fragment.SimpleRepresentationFragment;
 import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import net.xaethos.tabby.net.ApiRequest;
 import android.content.Intent;
@@ -23,6 +23,8 @@ import com.theoryinpractise.halbuilder.api.Link;
 
 public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
 {
+    // ***** Constants
+
     private static final String TAG = "MainActivity";
 
     // State keys
@@ -34,19 +36,9 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     // ***** Instance methods
 
-    private ParcelableReadableRepresentation getRepresentation() {
-        return mRepresentation;
-    }
-
-    private void setRepresentation(ParcelableReadableRepresentation representation) {
-        mRepresentation = representation;
-    }
-
     private URI getSelfURI() {
-        ParcelableReadableRepresentation representation = getRepresentation();
-
-        if (representation != null) {
-            Link self = representation.getResourceLink();
+        if (mRepresentation != null) {
+            Link self = mRepresentation.getResourceLink();
             if (self != null) return URI.create(self.getHref());
         }
 
@@ -101,21 +93,16 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
     // *** Helper methods
 
     private ParcelableReadableRepresentation loadRepresentation(Bundle savedInstanceState) {
-        ParcelableReadableRepresentation representation = getRepresentation();
-
-        if (representation == null && savedInstanceState != null) {
-            representation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
-            if ((representation = savedInstanceState.getParcelable(ARG_REPRESENTATION)) != null) {
-                setRepresentation(representation);
-            }
+        if (mRepresentation == null && savedInstanceState != null) {
+            mRepresentation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
         }
 
-        if (representation == null) {
+        if (mRepresentation == null) {
             ApiGetRequestTask request = new ApiGetRequestTask();
             request.execute(getSelfURI());
         }
 
-        return representation;
+        return mRepresentation;
     }
 
     private void loadRepresentationFragment(ParcelableReadableRepresentation representation) {
@@ -124,12 +111,30 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = SimpleRepresentationFragment.withRepresentation(representation);
+            Fragment fragment = getRepresentationFragment(representation);
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);
             transaction.commit();
         }
+    }
+
+    private BaseRepresentationFragment getRepresentationFragment(ParcelableReadableRepresentation representation) {
+        BaseRepresentationFragment.Builder builder = new BaseRepresentationFragment.Builder();
+        builder.setRepresentation(representation);
+
+        // builder.showBasicRels(true);
+        builder.showRel("curies", false);
+
+        builder.setLinkView("ht:post", R.layout.post_link_item);
+
+        String href = representation.getResourceLink().getHref();
+
+        if ("/".equals(href)) {
+            builder.setFragmentView(R.layout.root_representation_view);
+        }
+
+        return builder.buildFragment(BaseRepresentationFragment.class);
     }
 
     // ***** Inner classes
@@ -151,8 +156,12 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         @Override
         protected void onPostExecute(ParcelableReadableRepresentation result) {
             if (result != null) {
-                setRepresentation(result);
+                mRepresentation = result;
                 loadRepresentationFragment(result);
+            }
+            else {
+                Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
+                finish();
             }
         }
 
