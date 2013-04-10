@@ -30,6 +30,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     protected static final String ARG_LINK_LAYOUT = "link_layout";
     protected static final String ARG_PROPERTY_LAYOUT_MAP = "property_layout_map";
     protected static final String ARG_LINK_LAYOUT_MAP = "link_layout_map";
+    protected static final String ARG_REL_SHOW_MAP = "rel_show_map";
 
     // ***** Instance fields
 
@@ -76,7 +77,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     protected boolean isViewableRel(String rel) {
-        return !(Support.SELF.equals(rel) || Support.CURIE.equals(rel) || Support.PROFILE.equals(rel));
+        return getArguments().getBundle(ARG_REL_SHOW_MAP).getBoolean(rel, true);
     }
 
     // *** Fragment lifecycle
@@ -280,12 +281,15 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     // ***** Inner classes
 
-    public static class ArgumentsBuilder
+    public static class Builder
     {
+        private static final String[] BASIC_RELS = { Support.SELF, Support.CURIE, Support.PROFILE };
+
         private final Bundle mArgs;
 
-        public ArgumentsBuilder() {
+        public Builder() {
             Bundle args = new Bundle();
+            Bundle subArgs;
             // Set defaults...
             args.putInt(ARG_FRAGMENT_LAYOUT, R.layout.default_representation_view);
             args.putInt(ARG_PROPERTY_LAYOUT, R.layout.default_property_item);
@@ -293,40 +297,75 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             args.putInt(ARG_LINK_LAYOUT, R.layout.default_link_item);
             args.putBundle(ARG_LINK_LAYOUT_MAP, new Bundle());
 
+            subArgs = new Bundle();
+            for (String rel : BASIC_RELS) {
+                subArgs.putBoolean(rel, false);
+            }
+            args.putBundle(ARG_REL_SHOW_MAP, subArgs);
+
             mArgs = args;
         }
 
-        public ArgumentsBuilder setRepresentation(ParcelableReadableRepresentation representation) {
+        public Builder setRepresentation(ParcelableReadableRepresentation representation) {
             mArgs.putParcelable(ARG_REPRESENTATION, representation);
             return this;
         }
 
-        public ArgumentsBuilder setFragmentView(int resId) {
+        public Builder setFragmentView(int resId) {
             mArgs.putInt(ARG_FRAGMENT_LAYOUT, resId);
             return this;
         }
 
-        public ArgumentsBuilder setDefaultPropertyView(int resId) {
+        public Builder setDefaultPropertyView(int resId) {
             mArgs.putInt(ARG_PROPERTY_LAYOUT, resId);
             return this;
         }
 
-        public ArgumentsBuilder setPropertyView(String name, int resId) {
+        public Builder setPropertyView(String name, int resId) {
             mArgs.getBundle(ARG_PROPERTY_LAYOUT_MAP).putInt(name, resId);
             return this;
         }
 
-        public ArgumentsBuilder setDefaultLinkView(int resId) {
+        public Builder setDefaultLinkView(int resId) {
             mArgs.putInt(ARG_LINK_LAYOUT, resId);
             return this;
         }
 
-        public ArgumentsBuilder setLinkView(String rel, int resId) {
+        public Builder setLinkView(String rel, int resId) {
             mArgs.getBundle(ARG_LINK_LAYOUT_MAP).putInt(rel, resId);
             return this;
         }
 
-        public Bundle build() {
+        public Builder showBasicRels(boolean show) {
+            Bundle showMap = mArgs.getBundle(ARG_REL_SHOW_MAP);
+            for (String rel : BASIC_RELS) {
+                showMap.putBoolean(rel, show);
+            }
+            return this;
+        }
+
+        public Builder showRel(String rel, boolean show) {
+            mArgs.getBundle(ARG_REL_SHOW_MAP).putBoolean(rel, show);
+            return this;
+        }
+
+        public <T extends BaseRepresentationFragment> T buildFragment(Class<T> klass) {
+            T fragment;
+            try {
+                fragment = klass.newInstance();
+            }
+            catch (java.lang.InstantiationException e) {
+                throw new IllegalArgumentException(klass.getName() + " must implement the zero-argument contructor.");
+            }
+            catch (IllegalAccessException e) {
+                throw new IllegalArgumentException(klass.getName() + " must have a public zero-argument contructor.");
+            }
+
+            fragment.setArguments(mArgs);
+            return fragment;
+        }
+
+        public Bundle buildArguments() {
             return new Bundle(mArgs);
         }
     }

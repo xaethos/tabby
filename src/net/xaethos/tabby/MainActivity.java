@@ -36,19 +36,9 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     // ***** Instance methods
 
-    private ParcelableReadableRepresentation getRepresentation() {
-        return mRepresentation;
-    }
-
-    private void setRepresentation(ParcelableReadableRepresentation representation) {
-        mRepresentation = representation;
-    }
-
     private URI getSelfURI() {
-        ParcelableReadableRepresentation representation = getRepresentation();
-
-        if (representation != null) {
-            Link self = representation.getResourceLink();
+        if (mRepresentation != null) {
+            Link self = mRepresentation.getResourceLink();
             if (self != null) return URI.create(self.getHref());
         }
 
@@ -103,21 +93,16 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
     // *** Helper methods
 
     private ParcelableReadableRepresentation loadRepresentation(Bundle savedInstanceState) {
-        ParcelableReadableRepresentation representation = getRepresentation();
-
-        if (representation == null && savedInstanceState != null) {
-            representation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
-            if ((representation = savedInstanceState.getParcelable(ARG_REPRESENTATION)) != null) {
-                setRepresentation(representation);
-            }
+        if (mRepresentation == null && savedInstanceState != null) {
+            mRepresentation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
         }
 
-        if (representation == null) {
+        if (mRepresentation == null) {
             ApiGetRequestTask request = new ApiGetRequestTask();
             request.execute(getSelfURI());
         }
 
-        return representation;
+        return mRepresentation;
     }
 
     private void loadRepresentationFragment(ParcelableReadableRepresentation representation) {
@@ -126,8 +111,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = new BaseRepresentationFragment();
-            fragment.setArguments(getFragmentArguments(representation));
+            Fragment fragment = getRepresentationFragment(representation);
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);
@@ -135,9 +119,14 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         }
     }
 
-    private Bundle getFragmentArguments(ParcelableReadableRepresentation representation) {
-        BaseRepresentationFragment.ArgumentsBuilder builder = new BaseRepresentationFragment.ArgumentsBuilder();
-        builder.setRepresentation(representation).setLinkView("ht:post", R.layout.post_link_item);
+    private BaseRepresentationFragment getRepresentationFragment(ParcelableReadableRepresentation representation) {
+        BaseRepresentationFragment.Builder builder = new BaseRepresentationFragment.Builder();
+        builder.setRepresentation(representation);
+
+        // builder.showBasicRels(true);
+        builder.showRel("curies", false);
+
+        builder.setLinkView("ht:post", R.layout.post_link_item);
 
         String href = representation.getResourceLink().getHref();
 
@@ -145,7 +134,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
             builder.setFragmentView(R.layout.root_representation_view);
         }
 
-        return builder.build();
+        return builder.buildFragment(BaseRepresentationFragment.class);
     }
 
     // ***** Inner classes
@@ -167,7 +156,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         @Override
         protected void onPostExecute(ParcelableReadableRepresentation result) {
             if (result != null) {
-                setRepresentation(result);
+                mRepresentation = result;
                 loadRepresentationFragment(result);
             }
             else {
