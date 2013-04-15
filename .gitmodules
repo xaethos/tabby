@@ -1,3 +1,6 @@
 [submodule "submodules/merge_adapter"]
 	path = submodules/merge_adapter
 	url = git://github.com/commonsguy/cwac-merge.git
+[submodule "submodules/halparser-android"]
+	path = submodules/halparser-android
+	url = git://github.com/xaethos/halparser-android.git

@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 
-import net.xaethos.tabby.halbuilder.DefaultRepresentationFactory;
-import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
+import net.xaethos.android.halparser.HALJsonParser;
+import net.xaethos.android.halparser.HALResource;
 import android.util.Log;
 
 public class ApiRequest
@@ -16,14 +16,14 @@ public class ApiRequest
 
     private static final URI API_ROOT = URI.create("http://haltalk.herokuapp.com");
 
-    public static ParcelableReadableRepresentation get(URI uri) throws IOException {
+    public static HALResource get(URI uri) throws IOException {
         Log.i(TAG, "Starting GET " + uri);
 
         if (!uri.isAbsolute()) {
             uri = API_ROOT.resolve(uri);
         }
 
-        ParcelableReadableRepresentation representation;
+        HALResource resource;
 
         HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
         conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
@@ -35,20 +35,20 @@ public class ApiRequest
             return null;
         }
 
-        DefaultRepresentationFactory factory = new DefaultRepresentationFactory();
+        HALJsonParser parser = new HALJsonParser(API_ROOT);
         InputStream in = conn.getInputStream();
 
         try {
-            representation = factory.readRepresentation(new InputStreamReader(in));
+            resource = parser.parse(new InputStreamReader(in));
         }
         finally {
             in.close();
         }
 
-        return representation;
+        return resource;
     }
 
-    public static ParcelableReadableRepresentation get(String path) throws IOException {
+    public static HALResource get(String path) throws IOException {
         return get(URI.create(path));
     }
 

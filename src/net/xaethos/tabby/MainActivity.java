@@ -3,9 +3,10 @@ package net.xaethos.tabby;
 import java.io.IOException;
 import java.net.URI;
 
+import net.xaethos.android.halparser.HALLink;
+import net.xaethos.android.halparser.HALResource;
 import net.xaethos.tabby.fragment.BaseRepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment;
-import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import net.xaethos.tabby.net.ApiRequest;
 import android.content.Intent;
 import android.net.Uri;
@@ -19,8 +20,6 @@ import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.theoryinpractise.halbuilder.api.Link;
-
 public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
 {
     // ***** Constants
@@ -32,13 +31,13 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     // ***** Instance fields
 
-    private ParcelableReadableRepresentation mRepresentation;
+    private HALResource mRepresentation;
 
     // ***** Instance methods
 
     private URI getSelfURI() {
         if (mRepresentation != null) {
-            Link self = mRepresentation.getResourceLink();
+            HALLink self = mRepresentation.getLink("self");
             if (self != null) return URI.create(self.getHref());
         }
 
@@ -56,7 +55,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ParcelableReadableRepresentation representation = loadRepresentation(savedInstanceState);
+        HALResource representation = loadRepresentation(savedInstanceState);
         if (representation != null) {
             loadRepresentationFragment(representation);
         }
@@ -75,16 +74,16 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
     // *** RepresentationFragment.OnLinkFollowListener implementation
 
     @Override
-    public void onFollowLink(Link link) {
+    public void onFollowLink(HALLink link) {
         if (link == null) {
             Toast.makeText(this, "No link to follow", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if (link.hasTemplate()) {
-            Toast.makeText(this, "Can't follow templated links", Toast.LENGTH_SHORT).show();
-            return;
-        }
+//        if ((Boolean) link.getAttribute("templated")) {
+//            Toast.makeText(this, "Can't follow templated links", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
 
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getHref()), this, this.getClass());
         startActivity(intent);
@@ -92,7 +91,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     // *** Helper methods
 
-    private ParcelableReadableRepresentation loadRepresentation(Bundle savedInstanceState) {
+    private HALResource loadRepresentation(Bundle savedInstanceState) {
         if (mRepresentation == null && savedInstanceState != null) {
             mRepresentation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
         }
@@ -105,7 +104,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         return mRepresentation;
     }
 
-    private void loadRepresentationFragment(ParcelableReadableRepresentation representation) {
+    private void loadRepresentationFragment(HALResource representation) {
         FragmentManager manager = getSupportFragmentManager();
 
         if (manager.findFragmentById(android.R.id.content) == null) {
@@ -119,7 +118,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         }
     }
 
-    private BaseRepresentationFragment getRepresentationFragment(ParcelableReadableRepresentation representation) {
+    private BaseRepresentationFragment getRepresentationFragment(HALResource representation) {
         BaseRepresentationFragment.Builder builder = new BaseRepresentationFragment.Builder();
         builder.setRepresentation(representation);
 
@@ -128,7 +127,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
         builder.setLinkView("ht:post", R.layout.post_link_item);
 
-        String href = representation.getResourceLink().getHref();
+        String href = representation.getLink("self").getHref();
 
         if ("/".equals(href)) {
             builder.setFragmentView(R.layout.root_representation_view);
@@ -139,11 +138,11 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     // ***** Inner classes
 
-    class ApiGetRequestTask extends AsyncTask<URI, Void, ParcelableReadableRepresentation>
+    class ApiGetRequestTask extends AsyncTask<URI, Void, HALResource>
     {
 
         @Override
-        protected ParcelableReadableRepresentation doInBackground(URI... paths) {
+        protected HALResource doInBackground(URI... paths) {
             try {
                 return ApiRequest.get(paths[0]);
             }
@@ -154,7 +153,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         }
 
         @Override
-        protected void onPostExecute(ParcelableReadableRepresentation result) {
+        protected void onPostExecute(HALResource result) {
             if (result != null) {
                 mRepresentation = result;
                 loadRepresentationFragment(result);

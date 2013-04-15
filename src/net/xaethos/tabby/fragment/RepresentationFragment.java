@@ -1,57 +1,56 @@
 package net.xaethos.tabby.fragment;
 
-import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
+import net.xaethos.android.halparser.HALLink;
+import net.xaethos.android.halparser.HALResource;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.theoryinpractise.halbuilder.api.Link;
-
 public interface RepresentationFragment
 {
 
-    public ParcelableReadableRepresentation getRepresentation();
+    public HALResource getRepresentation();
 
-    public void setRepresentation(ParcelableReadableRepresentation representation);
+    public void setRepresentation(HALResource representation);
 
-    public void bindRepresentation(View view, ParcelableReadableRepresentation representation);
+    public void bindRepresentation(View view, HALResource representation);
 
     public View getPropertyView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String name);
 
     public void bindPropertyView(View propertyView,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String name,
             Object value);
 
     public View getLinkView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
-            Link link);
+            HALResource representation,
+            HALLink link);
 
-    public void bindLinkView(View propertyView, ParcelableReadableRepresentation representation, Link link);
+    public void bindLinkView(View propertyView, HALResource representation, HALLink link);
 
     public View getResourceView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String rel,
-            ParcelableReadableRepresentation resource);
+            HALResource resource);
 
     public void bindResourceView(View propertyView,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String rel,
-            ParcelableReadableRepresentation resource);
+            HALResource resource);
 
     // ***** Inner classes
 
     public interface OnLinkFollowListener
     {
-        void onFollowLink(Link link);
+        void onFollowLink(HALLink link);
     }
 
 }

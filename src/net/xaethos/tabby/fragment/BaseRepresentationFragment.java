@@ -1,11 +1,10 @@
 package net.xaethos.tabby.fragment;
 
 import java.util.Map;
-import java.util.Map.Entry;
 
+import net.xaethos.android.halparser.HALLink;
+import net.xaethos.android.halparser.HALResource;
 import net.xaethos.tabby.R;
-import net.xaethos.tabby.halbuilder.impl.api.Support;
-import net.xaethos.tabby.halbuilder.impl.representations.ParcelableReadableRepresentation;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -14,9 +13,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import com.theoryinpractise.halbuilder.api.Link;
-import com.theoryinpractise.halbuilder.api.ReadableRepresentation;
 
 public class BaseRepresentationFragment extends Fragment implements RepresentationFragment, View.OnClickListener
 {
@@ -34,13 +30,13 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     // ***** Instance fields
 
-    private ParcelableReadableRepresentation mRepresentation;
+    private HALResource mRepresentation;
     protected OnLinkFollowListener mLinkListener;
 
     // ***** Instance methods
 
     @Override
-    public ParcelableReadableRepresentation getRepresentation() {
+    public HALResource getRepresentation() {
         if (mRepresentation == null) {
             Bundle args = getArguments();
             if (args != null) {
@@ -51,7 +47,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     @Override
-    public void setRepresentation(ParcelableReadableRepresentation representation) {
+    public void setRepresentation(HALResource representation) {
         mRepresentation = representation;
     }
 
@@ -102,12 +98,12 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     // *** View binding
 
     @Override
-    public void bindRepresentation(View view, ParcelableReadableRepresentation representation) {
+    public void bindRepresentation(View view, HALResource representation) {
         bindProperties(view, representation);
         bindLinks(view, representation);
     }
 
-    private void bindProperties(View view, ParcelableReadableRepresentation representation) {
+    private void bindProperties(View view, HALResource representation) {
         Map<String, Object> properties = representation.getProperties();
 
         ViewGroup propertiesLayout = (ViewGroup) view.findViewById(R.id.properties_layout);
@@ -129,7 +125,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     public View getPropertyView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String name)
     {
         View view = rootView.findViewWithTag(propertyTag(name));
@@ -140,11 +136,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     @Override
-    public void bindPropertyView(View propertyView,
-            ParcelableReadableRepresentation representation,
-            String name,
-            Object value)
-    {
+    public void bindPropertyView(View propertyView, HALResource representation, String name, Object value) {
         View childView;
 
         childView = propertyView.findViewById(R.id.property_name);
@@ -158,32 +150,34 @@ public class BaseRepresentationFragment extends Fragment implements Representati
         }
     }
 
-    private void bindLinks(View view, ParcelableReadableRepresentation representation) {
+    private void bindLinks(View view, HALResource representation) {
         ViewGroup layout = (ViewGroup) view.findViewById(R.id.links_layout);
         LayoutInflater inflater = LayoutInflater.from(getActivity());
 
         // Links
-        for (Link link : representation.getLinks()) {
-            if (!isViewableRel(link.getRel())) continue;
-            View linkView = getLinkView(inflater, view, layout, representation, link);
-            if (linkView != null) {
-                bindLinkView(linkView, representation, link);
-                if (linkView.getParent() == null && layout != null) {
-                    layout.addView(linkView);
+        for (String rel : representation.getLinkRels()) {
+            if (!isViewableRel(rel)) continue;
+            for (HALLink link : representation.getLinks(rel)) {
+                View linkView = getLinkView(inflater, view, layout, representation, link);
+                if (linkView != null) {
+                    bindLinkView(linkView, representation, link);
+                    if (linkView.getParent() == null && layout != null) {
+                        layout.addView(linkView);
+                    }
                 }
             }
         }
 
         // Resources
-        for (Entry<String, ReadableRepresentation> entry : representation.getResources()) {
-            String rel = entry.getKey();
+        for (String rel : representation.getResourceRels()) {
             if (!isViewableRel(rel)) continue;
-            ParcelableReadableRepresentation resource = (ParcelableReadableRepresentation) entry.getValue();
-            View resourceView = getResourceView(inflater, view, layout, representation, rel, resource);
-            if (resourceView != null) {
-                bindResourceView(resourceView, representation, rel, resource);
-                if (resourceView.getParent() == null && layout != null) {
-                    layout.addView(resourceView);
+            for (HALResource resource : representation.getResources(rel)) {
+                View resourceView = getResourceView(inflater, view, layout, representation, rel, resource);
+                if (resourceView != null) {
+                    bindResourceView(resourceView, representation, rel, resource);
+                    if (resourceView.getParent() == null && layout != null) {
+                        layout.addView(resourceView);
+                    }
                 }
             }
         }
@@ -193,8 +187,8 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     public View getLinkView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
-            Link link)
+            HALResource representation,
+            HALLink link)
     {
         String rel = link.getRel();
         View view = rootView.findViewWithTag(linkTag(rel));
@@ -205,12 +199,12 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     @Override
-    public void bindLinkView(View linkView, ParcelableReadableRepresentation representation, Link link) {
+    public void bindLinkView(View linkView, HALResource representation, HALLink link) {
         View childView;
 
         childView = linkView.findViewById(R.id.link_title);
         if (childView instanceof TextView) {
-            String title = link.getTitle();
+            String title = (String) link.getAttribute("title");
             if (TextUtils.isEmpty(title)) title = link.getRel();
             ((TextView) childView).setText(title);
         }
@@ -223,9 +217,9 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     public View getResourceView(LayoutInflater inflater,
             View rootView,
             ViewGroup container,
-            ParcelableReadableRepresentation representation,
+            HALResource representation,
             String rel,
-            ParcelableReadableRepresentation resource)
+            HALResource resource)
     {
         View view = getView().findViewWithTag(linkTag(rel));
         if (view == null && container != null) {
@@ -235,17 +229,13 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     }
 
     @Override
-    public void bindResourceView(View resourceView,
-            ParcelableReadableRepresentation representation,
-            String rel,
-            ParcelableReadableRepresentation resource)
-    {
+    public void bindResourceView(View resourceView, HALResource representation, String rel, HALResource resource) {
         View childView;
-        Link link = resource.getResourceLink();
+        HALLink link = resource.getLink("self");
 
         childView = resourceView.findViewById(R.id.link_title);
         if (childView instanceof TextView) {
-            String title = link.getTitle();
+            String title = (String) link.getAttribute("title");
             if (TextUtils.isEmpty(title)) title = rel;
             ((TextView) childView).setText(title);
         }
@@ -264,7 +254,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
     @Override
     public void onClick(View v) {
         if (mLinkListener != null) {
-            Link link = (Link) v.getTag(R.id.tag_link);
+            HALLink link = (HALLink) v.getTag(R.id.tag_link);
             if (link != null) mLinkListener.onFollowLink(link);
         }
     }
@@ -283,7 +273,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
     public static class Builder
     {
-        private static final String[] BASIC_RELS = { Support.SELF, Support.CURIE, Support.PROFILE };
+        private static final String[] BASIC_RELS = { "self", "curie", "profile" };
 
         private final Bundle mArgs;
 
@@ -306,7 +296,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
             mArgs = args;
         }
 
-        public Builder setRepresentation(ParcelableReadableRepresentation representation) {
+        public Builder setRepresentation(HALResource representation) {
             mArgs.putParcelable(ARG_REPRESENTATION, representation);
             return this;
         }
