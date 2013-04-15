@@ -57,7 +57,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
             return URI.create(uri.toString());
         }
 
-        return URI.create("/");
+        return URI.create("/articles");
     }
 
     // *** Activity life-cycle
@@ -104,6 +104,12 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
             else {
                 followURI(link.getURI(map));
             }
+            return;
+        }
+
+        if (link.getRel() == "external") {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getHref()));
+            startActivity(intent);
             return;
         }
 

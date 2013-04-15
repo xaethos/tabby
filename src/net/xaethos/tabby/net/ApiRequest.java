@@ -14,7 +14,7 @@ public class ApiRequest
 {
     private static final String TAG = "ApiRequest";
 
-    private static final URI API_ROOT = URI.create("http://haltalk.herokuapp.com");
+    private static final URI API_ROOT = URI.create("http://enigmatic-plateau-6595.herokuapp.com/");
 
     public static HALResource get(URI uri) throws IOException {
         Log.i(TAG, "Starting GET " + uri);
@@ -26,8 +26,7 @@ public class ApiRequest
         HALResource resource;
 
         HttpURLConnection conn = (HttpURLConnection) uri.toURL().openConnection();
-        conn.setRequestProperty("X-Requested-With", "XMLHttpRequest");
-        conn.setRequestProperty("Accept", "application/hal+json, application/json, */*; q=0.01");
+        conn.setRequestProperty("Accept", "application/hal+json, application/json");
 
         int responseCode = conn.getResponseCode();
         if (responseCode < 200 || responseCode >= 300) {
