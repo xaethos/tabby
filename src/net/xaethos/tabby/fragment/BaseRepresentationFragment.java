@@ -146,7 +146,7 @@ public class BaseRepresentationFragment extends Fragment implements Representati
 
         childView = propertyView.findViewById(R.id.property_value);
         if (childView instanceof TextView) {
-            ((TextView) childView).setText(value.toString());
+            ((TextView) childView).setText(value == null ? "" : value.toString());
         }
     }
 

@@ -1,5 +1,7 @@
 package net.xaethos.tabby.fragment;
 
+import java.util.Map;
+
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
 import android.view.LayoutInflater;
@@ -21,10 +23,7 @@ public interface RepresentationFragment
             HALResource representation,
             String name);
 
-    public void bindPropertyView(View propertyView,
-            HALResource representation,
-            String name,
-            Object value);
+    public void bindPropertyView(View propertyView, HALResource representation, String name, Object value);
 
     public View getLinkView(LayoutInflater inflater,
             View rootView,
@@ -41,16 +40,15 @@ public interface RepresentationFragment
             String rel,
             HALResource resource);
 
-    public void bindResourceView(View propertyView,
-            HALResource representation,
-            String rel,
-            HALResource resource);
+    public void bindResourceView(View propertyView, HALResource representation, String rel, HALResource resource);
 
     // ***** Inner classes
 
     public interface OnLinkFollowListener
     {
         void onFollowLink(HALLink link);
+
+        void onFollowLink(HALLink link, Map<String, Object> map);
     }
 
 }

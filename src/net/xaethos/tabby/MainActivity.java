@@ -2,12 +2,19 @@ package net.xaethos.tabby;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
 import net.xaethos.tabby.fragment.BaseRepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment;
 import net.xaethos.tabby.net.ApiRequest;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -16,8 +23,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
@@ -75,21 +86,36 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
 
     @Override
     public void onFollowLink(HALLink link) {
+        onFollowLink(link, null);
+    }
+
+    @Override
+    public void onFollowLink(HALLink link, Map<String, Object> map) {
         if (link == null) {
             Toast.makeText(this, "No link to follow", Toast.LENGTH_SHORT).show();
             return;
         }
 
-//        if ((Boolean) link.getAttribute("templated")) {
-//            Toast.makeText(this, "Can't follow templated links", Toast.LENGTH_SHORT).show();
-//            return;
-//        }
+        if (link.isTemplated()) {
+            if (map == null) {
+                URITemplateDialogFragment dialog = URITemplateDialogFragment.forLink(link);
+                dialog.show(getFragmentManager(), "uritemplate");
+            }
+            else {
+                followURI(link.getURI(map));
+            }
+            return;
+        }
 
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link.getHref()), this, this.getClass());
-        startActivity(intent);
+        followURI(link.getURI());
     }
 
     // *** Helper methods
+
+    protected void followURI(URI target) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(target.toString()), this, this.getClass());
+        startActivity(intent);
+    }
 
     private HALResource loadRepresentation(Bundle savedInstanceState) {
         if (mRepresentation == null && savedInstanceState != null) {
@@ -162,6 +188,67 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
                 Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
                 finish();
             }
+        }
+
+    }
+
+    public static class URITemplateDialogFragment extends DialogFragment implements DialogInterface.OnClickListener
+    {
+        private static final String ARG_LINK = "link";
+
+        private LinearLayout mLayout;
+
+        public static URITemplateDialogFragment forLink(HALLink link) {
+            Bundle args = new Bundle(1);
+            args.putParcelable(ARG_LINK, link);
+            URITemplateDialogFragment fragment = new URITemplateDialogFragment();
+            fragment.setArguments(args);
+            return fragment;
+        }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            HALLink link = getArguments().getParcelable(ARG_LINK);
+
+            String title = (String) link.getAttribute("title");
+            if (TextUtils.isEmpty(title)) title = link.getRel();
+
+            return new AlertDialog.Builder(getActivity()).setTitle(title)
+                                                         .setView(getContentView(link.getVariables()))
+                                                         .setPositiveButton(android.R.string.ok, this)
+                                                         .setCancelable(true)
+                                                         .create();
+        }
+
+        private View getContentView(Set<String> variables) {
+            if (mLayout == null) {
+                LinearLayout layout = new LinearLayout(getActivity());
+                layout.setOrientation(LinearLayout.VERTICAL);
+                for (String variable : variables) {
+                    EditText et = new EditText(getActivity());
+                    et.setHint(variable);
+                    et.setTag(variable);
+                    layout.addView(et);
+                }
+                mLayout = layout;
+            }
+            return mLayout;
+        }
+
+        // *** DialogInterface.OnClickListener
+
+        @Override
+        public void onClick(DialogInterface dialog, int which) {
+            LinearLayout layout = mLayout;
+            HALLink link = getArguments().getParcelable(ARG_LINK);
+            Map<String, Object> map = new HashMap<String, Object>();
+
+            for (String variable : link.getVariables()) {
+                EditText et = (EditText) layout.findViewWithTag(variable);
+                map.put(variable, et.getText().toString());
+            }
+
+            ((RepresentationFragment.OnLinkFollowListener) getActivity()).onFollowLink(link, map);
         }
 
     }
