@@ -1,42 +1,40 @@
 package net.xaethos.tabby;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.xaethos.android.halbrowser.APIClient;
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
 import net.xaethos.tabby.fragment.BaseRepresentationFragment;
 import net.xaethos.tabby.fragment.RepresentationFragment;
-import net.xaethos.tabby.net.ApiRequest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.app.LoaderManager;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.Loader;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-public class MainActivity extends FragmentActivity implements RepresentationFragment.OnLinkFollowListener
+public class MainActivity extends FragmentActivity
+        implements
+        RepresentationFragment.OnLinkFollowListener,
+        LoaderManager.LoaderCallbacks<HALResource>
 {
-    // ***** Constants
-
-    private static final String TAG = "MainActivity";
-
     // State keys
     private static final String ARG_REPRESENTATION = "representation";
 
@@ -45,20 +43,6 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
     private HALResource mRepresentation;
 
     // ***** Instance methods
-
-    private URI getSelfURI() {
-        if (mRepresentation != null) {
-            HALLink self = mRepresentation.getLink("self");
-            if (self != null) return URI.create(self.getHref());
-        }
-
-        Uri uri = getIntent().getData();
-        if (uri != null) {
-            return URI.create(uri.toString());
-        }
-
-        return URI.create("/articles");
-    }
 
     // *** Activity life-cycle
 
@@ -129,8 +113,7 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         }
 
         if (mRepresentation == null) {
-            ApiGetRequestTask request = new ApiGetRequestTask();
-            request.execute(getSelfURI());
+            getLoaderManager().initLoader(0, null, this);
         }
 
         return mRepresentation;
@@ -168,35 +151,39 @@ public class MainActivity extends FragmentActivity implements RepresentationFrag
         return builder.buildFragment(BaseRepresentationFragment.class);
     }
 
-    // ***** Inner classes
+    // *** LoaderManager.LoaderCallbacks<HALResource>
 
-    class ApiGetRequestTask extends AsyncTask<URI, Void, HALResource>
-    {
-
-        @Override
-        protected HALResource doInBackground(URI... paths) {
-            try {
-                return ApiRequest.get(paths[0]);
-            }
-            catch (IOException e) {
-                Log.e(TAG, "Error fetching from " + paths[0], e);
-                return null;
-            }
+    @Override
+    public Loader<HALResource> onCreateLoader(int id, Bundle args) {
+        APIClient client = new APIClient.Builder("http://enigmatic-plateau-6595.herokuapp.com/").setEntryPath("/articles")
+                                                                                                .build();
+        Uri uri = getIntent().getData();
+        if (uri != null) {
+            return client.getLoaderForURI(this, uri.toString());
         }
-
-        @Override
-        protected void onPostExecute(HALResource result) {
-            if (result != null) {
-                mRepresentation = result;
-                loadRepresentationFragment(result);
-            }
-            else {
-                Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
-                finish();
-            }
+        else {
+            return client.getLoader(this);
         }
-
     }
+
+    @Override
+    public void onLoadFinished(Loader<HALResource> loader, HALResource resource) {
+        if (resource != null) {
+            mRepresentation = resource;
+            loadRepresentationFragment(resource);
+        }
+        else {
+            Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
+            finish();
+        }
+    }
+
+    @Override
+    public void onLoaderReset(Loader<HALResource> loader) {
+        mRepresentation = null;
+    }
+
+    // ***** Inner classes
 
     public static class URITemplateDialogFragment extends DialogFragment implements DialogInterface.OnClickListener
     {
