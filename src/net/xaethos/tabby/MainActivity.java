@@ -6,10 +6,10 @@ import java.util.Map;
 import java.util.Set;
 
 import net.xaethos.android.halbrowser.APIClient;
+import net.xaethos.android.halbrowser.fragment.BaseResourceFragment;
+import net.xaethos.android.halbrowser.fragment.ResourceFragment;
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
-import net.xaethos.tabby.fragment.BaseRepresentationFragment;
-import net.xaethos.tabby.fragment.RepresentationFragment;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
@@ -32,7 +32,7 @@ import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity
         implements
-        RepresentationFragment.OnLinkFollowListener,
+        ResourceFragment.OnLinkFollowListener,
         LoaderManager.LoaderCallbacks<HALResource>
 {
     // State keys
@@ -66,12 +66,7 @@ public class MainActivity extends FragmentActivity
         if (mRepresentation != null) outState.putParcelable(ARG_REPRESENTATION, mRepresentation);
     }
 
-    // *** RepresentationFragment.OnLinkFollowListener implementation
-
-    @Override
-    public void onFollowLink(HALLink link) {
-        onFollowLink(link, null);
-    }
+    // *** ResourceFragment.OnLinkFollowListener implementation
 
     @Override
     public void onFollowLink(HALLink link, Map<String, Object> map) {
@@ -125,7 +120,7 @@ public class MainActivity extends FragmentActivity
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = getRepresentationFragment(representation);
+            Fragment fragment = getResourceFragment(representation);
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);
@@ -133,22 +128,11 @@ public class MainActivity extends FragmentActivity
         }
     }
 
-    private BaseRepresentationFragment getRepresentationFragment(HALResource representation) {
-        BaseRepresentationFragment.Builder builder = new BaseRepresentationFragment.Builder();
+    private BaseResourceFragment getResourceFragment(HALResource representation) {
+        BaseResourceFragment.Builder builder = new BaseResourceFragment.Builder();
         builder.setRepresentation(representation);
 
-        // builder.showBasicRels(true);
-        builder.showRel("curies", false);
-
-        builder.setLinkView("ht:post", R.layout.post_link_item);
-
-        String href = representation.getLink("self").getHref();
-
-        if ("/".equals(href)) {
-            builder.setFragmentView(R.layout.root_representation_view);
-        }
-
-        return builder.buildFragment(BaseRepresentationFragment.class);
+        return builder.buildFragment(BaseResourceFragment.class);
     }
 
     // *** LoaderManager.LoaderCallbacks<HALResource>
@@ -241,7 +225,7 @@ public class MainActivity extends FragmentActivity
                 map.put(variable, et.getText().toString());
             }
 
-            ((RepresentationFragment.OnLinkFollowListener) getActivity()).onFollowLink(link, map);
+            ((ResourceFragment.OnLinkFollowListener) getActivity()).onFollowLink(link, map);
         }
 
     }
