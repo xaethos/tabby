@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.Map;
 
 import net.xaethos.android.halbrowser.APIClient;
+import net.xaethos.android.halbrowser.Relation;
 import net.xaethos.android.halbrowser.fragment.BaseResourceFragment;
 import net.xaethos.android.halbrowser.fragment.ResourceFragment;
 import net.xaethos.android.halbrowser.fragment.URITemplateDialogFragment;
@@ -18,6 +19,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.text.TextUtils;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
@@ -26,7 +31,8 @@ public class MainActivity extends FragmentActivity
         ResourceFragment.OnLinkFollowListener,
         LoaderManager.LoaderCallbacks<HALResource>
 {
-    ResourceFragment mFragment;
+    private HALResource mResource;
+    private ResourceFragment mFragment;
 
     // *** Activity life-cycle
 
@@ -36,6 +42,39 @@ public class MainActivity extends FragmentActivity
 
         loadResourceFragment(null);
         getLoaderManager().initLoader(0, null, this);
+    }
+
+    // *** Options Menu
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.activity_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem menuItem = menu.findItem(R.id.menu_reload);
+        if (mResource != null) {
+            HALLink link = mResource.getLink(Relation.SELF);
+            menuItem.setEnabled(link != null);
+        }
+        else {
+            menuItem.setEnabled(false);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.menu_reload:
+            getLoaderManager().restartLoader(0, null, this);
+            return true;
+        default:
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     // *** ResourceFragment.OnLinkFollowListener implementation
@@ -111,8 +150,15 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onLoadFinished(Loader<HALResource> loader, HALResource resource) {
+        mResource = resource;
+        mFragment.setResource(resource);
+        invalidateOptionsMenu();
+
         if (resource != null) {
-            mFragment.setResource(resource);
+            String title = resource.getLink(Relation.SELF).getTitle();
+            if (!TextUtils.isEmpty(title)) {
+                setTitle(title);
+            }
         }
         else {
             Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
@@ -122,6 +168,9 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onLoaderReset(Loader<HALResource> loader) {
+        mResource = null;
+        mFragment.setResource(null);
+        invalidateOptionsMenu();
     }
 
 }
