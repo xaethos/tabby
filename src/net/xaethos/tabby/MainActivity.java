@@ -1,20 +1,15 @@
 package net.xaethos.tabby;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import net.xaethos.android.halbrowser.APIClient;
 import net.xaethos.android.halbrowser.fragment.BaseResourceFragment;
 import net.xaethos.android.halbrowser.fragment.ResourceFragment;
+import net.xaethos.android.halbrowser.fragment.URITemplateDialogFragment;
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
 import android.app.LoaderManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.Loader;
 import android.net.Uri;
@@ -23,11 +18,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.text.TextUtils;
-import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class MainActivity extends FragmentActivity
@@ -36,11 +27,11 @@ public class MainActivity extends FragmentActivity
         LoaderManager.LoaderCallbacks<HALResource>
 {
     // State keys
-    private static final String ARG_REPRESENTATION = "representation";
+    private static final String ARG_RESOURCE = "resource";
 
     // ***** Instance fields
 
-    private HALResource mRepresentation;
+    private HALResource mResource;
 
     // ***** Instance methods
 
@@ -50,9 +41,9 @@ public class MainActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        HALResource representation = loadRepresentation(savedInstanceState);
-        if (representation != null) {
-            loadRepresentationFragment(representation);
+        HALResource resource = loadResource(savedInstanceState);
+        if (resource != null) {
+            loadResourceFragment(resource);
         }
         else {
             setContentView(R.layout.view_loading);
@@ -63,7 +54,7 @@ public class MainActivity extends FragmentActivity
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        if (mRepresentation != null) outState.putParcelable(ARG_REPRESENTATION, mRepresentation);
+        if (mResource != null) outState.putParcelable(ARG_RESOURCE, mResource);
     }
 
     // *** ResourceFragment.OnLinkFollowListener implementation
@@ -77,8 +68,7 @@ public class MainActivity extends FragmentActivity
 
         if (link.isTemplated()) {
             if (map == null) {
-                URITemplateDialogFragment dialog = URITemplateDialogFragment.forLink(link);
-                dialog.show(getFragmentManager(), "uritemplate");
+                URITemplateDialogFragment.forLink(link).show(getSupportFragmentManager(), "uritemplate");
             }
             else {
                 followURI(link.getURI(map));
@@ -102,25 +92,25 @@ public class MainActivity extends FragmentActivity
         startActivity(intent);
     }
 
-    private HALResource loadRepresentation(Bundle savedInstanceState) {
-        if (mRepresentation == null && savedInstanceState != null) {
-            mRepresentation = savedInstanceState.getParcelable(ARG_REPRESENTATION);
+    private HALResource loadResource(Bundle savedInstanceState) {
+        if (mResource == null && savedInstanceState != null) {
+            mResource = savedInstanceState.getParcelable(ARG_RESOURCE);
         }
 
-        if (mRepresentation == null) {
+        if (mResource == null) {
             getLoaderManager().initLoader(0, null, this);
         }
 
-        return mRepresentation;
+        return mResource;
     }
 
-    private void loadRepresentationFragment(HALResource representation) {
+    private void loadResourceFragment(HALResource resource) {
         FragmentManager manager = getSupportFragmentManager();
 
         if (manager.findFragmentById(android.R.id.content) == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = getResourceFragment(representation);
+            Fragment fragment = getResourceFragment(resource);
 
             FragmentTransaction transaction = manager.beginTransaction();
             transaction.add(android.R.id.content, fragment);
@@ -128,9 +118,9 @@ public class MainActivity extends FragmentActivity
         }
     }
 
-    private BaseResourceFragment getResourceFragment(HALResource representation) {
+    private BaseResourceFragment getResourceFragment(HALResource resource) {
         BaseResourceFragment.Builder builder = new BaseResourceFragment.Builder();
-        builder.setRepresentation(representation);
+        builder.setResource(resource);
 
         return builder.buildFragment(BaseResourceFragment.class);
     }
@@ -153,8 +143,8 @@ public class MainActivity extends FragmentActivity
     @Override
     public void onLoadFinished(Loader<HALResource> loader, HALResource resource) {
         if (resource != null) {
-            mRepresentation = resource;
-            loadRepresentationFragment(resource);
+            mResource = resource;
+            loadResourceFragment(resource);
         }
         else {
             Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
@@ -164,70 +154,7 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onLoaderReset(Loader<HALResource> loader) {
-        mRepresentation = null;
-    }
-
-    // ***** Inner classes
-
-    public static class URITemplateDialogFragment extends DialogFragment implements DialogInterface.OnClickListener
-    {
-        private static final String ARG_LINK = "link";
-
-        private LinearLayout mLayout;
-
-        public static URITemplateDialogFragment forLink(HALLink link) {
-            Bundle args = new Bundle(1);
-            args.putParcelable(ARG_LINK, link);
-            URITemplateDialogFragment fragment = new URITemplateDialogFragment();
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            HALLink link = getArguments().getParcelable(ARG_LINK);
-
-            String title = (String) link.getAttribute("title");
-            if (TextUtils.isEmpty(title)) title = link.getRel();
-
-            return new AlertDialog.Builder(getActivity()).setTitle(title)
-                                                         .setView(getContentView(link.getVariables()))
-                                                         .setPositiveButton(android.R.string.ok, this)
-                                                         .setCancelable(true)
-                                                         .create();
-        }
-
-        private View getContentView(Set<String> variables) {
-            if (mLayout == null) {
-                LinearLayout layout = new LinearLayout(getActivity());
-                layout.setOrientation(LinearLayout.VERTICAL);
-                for (String variable : variables) {
-                    EditText et = new EditText(getActivity());
-                    et.setHint(variable);
-                    et.setTag(variable);
-                    layout.addView(et);
-                }
-                mLayout = layout;
-            }
-            return mLayout;
-        }
-
-        // *** DialogInterface.OnClickListener
-
-        @Override
-        public void onClick(DialogInterface dialog, int which) {
-            LinearLayout layout = mLayout;
-            HALLink link = getArguments().getParcelable(ARG_LINK);
-            Map<String, Object> map = new HashMap<String, Object>();
-
-            for (String variable : link.getVariables()) {
-                EditText et = (EditText) layout.findViewWithTag(variable);
-                map.put(variable, et.getText().toString());
-            }
-
-            ((ResourceFragment.OnLinkFollowListener) getActivity()).onFollowLink(link, map);
-        }
-
+        mResource = null;
     }
 
 }
