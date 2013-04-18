@@ -26,14 +26,7 @@ public class MainActivity extends FragmentActivity
         ResourceFragment.OnLinkFollowListener,
         LoaderManager.LoaderCallbacks<HALResource>
 {
-    // State keys
-    private static final String ARG_RESOURCE = "resource";
-
-    // ***** Instance fields
-
-    private HALResource mResource;
-
-    // ***** Instance methods
+    ResourceFragment mFragment;
 
     // *** Activity life-cycle
 
@@ -41,20 +34,8 @@ public class MainActivity extends FragmentActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        HALResource resource = loadResource(savedInstanceState);
-        if (resource != null) {
-            loadResourceFragment(resource);
-        }
-        else {
-            setContentView(R.layout.view_loading);
-        }
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-
-        if (mResource != null) outState.putParcelable(ARG_RESOURCE, mResource);
+        loadResourceFragment(null);
+        getLoaderManager().initLoader(0, null, this);
     }
 
     // *** ResourceFragment.OnLinkFollowListener implementation
@@ -92,36 +73,24 @@ public class MainActivity extends FragmentActivity
         startActivity(intent);
     }
 
-    private HALResource loadResource(Bundle savedInstanceState) {
-        if (mResource == null && savedInstanceState != null) {
-            mResource = savedInstanceState.getParcelable(ARG_RESOURCE);
-        }
-
-        if (mResource == null) {
-            getLoaderManager().initLoader(0, null, this);
-        }
-
-        return mResource;
-    }
-
     private void loadResourceFragment(HALResource resource) {
         FragmentManager manager = getSupportFragmentManager();
 
-        if (manager.findFragmentById(android.R.id.content) == null) {
+        mFragment = (ResourceFragment) manager.findFragmentById(android.R.id.content);
+        if (mFragment == null) {
             ((ViewGroup) findViewById(android.R.id.content)).removeAllViews();
 
-            Fragment fragment = getResourceFragment(resource);
+            mFragment = getResourceFragment(resource);
 
             FragmentTransaction transaction = manager.beginTransaction();
-            transaction.add(android.R.id.content, fragment);
+            transaction.add(android.R.id.content, (Fragment) mFragment);
             transaction.commit();
         }
     }
 
-    private BaseResourceFragment getResourceFragment(HALResource resource) {
+    private ResourceFragment getResourceFragment(HALResource resource) {
         BaseResourceFragment.Builder builder = new BaseResourceFragment.Builder();
         builder.setResource(resource);
-
         return builder.buildFragment(BaseResourceFragment.class);
     }
 
@@ -143,8 +112,7 @@ public class MainActivity extends FragmentActivity
     @Override
     public void onLoadFinished(Loader<HALResource> loader, HALResource resource) {
         if (resource != null) {
-            mResource = resource;
-            loadResourceFragment(resource);
+            mFragment.setResource(resource);
         }
         else {
             Toast.makeText(MainActivity.this, "Couldn't GET relation :(", Toast.LENGTH_LONG).show();
@@ -154,7 +122,6 @@ public class MainActivity extends FragmentActivity
 
     @Override
     public void onLoaderReset(Loader<HALResource> loader) {
-        mResource = null;
     }
 
 }
