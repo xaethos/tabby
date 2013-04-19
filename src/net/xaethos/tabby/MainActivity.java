@@ -10,15 +10,15 @@ import net.xaethos.android.halbrowser.fragment.ResourceFragment;
 import net.xaethos.android.halbrowser.fragment.URITemplateDialogFragment;
 import net.xaethos.android.halparser.HALLink;
 import net.xaethos.android.halparser.HALResource;
-import android.app.LoaderManager;
 import android.content.Intent;
-import android.content.Loader;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -41,7 +41,7 @@ public class MainActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
 
         loadResourceFragment(null);
-        getLoaderManager().initLoader(0, null, this);
+        getSupportLoaderManager().initLoader(0, null, this);
     }
 
     // *** Options Menu
@@ -70,7 +70,7 @@ public class MainActivity extends FragmentActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
         case R.id.menu_reload:
-            getLoaderManager().restartLoader(0, null, this);
+            getSupportLoaderManager().restartLoader(0, null, this);
             return true;
         default:
             return super.onOptionsItemSelected(item);
