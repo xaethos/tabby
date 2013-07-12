@@ -5,6 +5,7 @@
 # Gradle
 .gradle/
 build/
+gradle.properties
 gradle-app.setting
 
 # support libs
